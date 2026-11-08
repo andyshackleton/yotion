@@ -11,13 +11,12 @@
     "next": "15.5.12",
     "react": "19.1.1",
     "react-dom": "19.1.1",
-    "pg": "8.16.3"
+    "@supabase/supabase-js": "2.57.0"
   },
   "devDependencies": {
     "typescript": "~5.9.3",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
-    "@types/pg": "8.15.5"
+    "@types/react-dom": "^19.0.0"
   }
 }
