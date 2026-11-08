@@ -1,5 +1,5 @@
 import {NextRequest} from "next/server";
-import {lookupToken} from "@/lib/yotion-db";
+import {lookupToken} from "../../../lib/yotion-db";
 export const runtime="nodejs";
 export const dynamic="force-dynamic";
 const esc=(s:string)=>s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]??c));
