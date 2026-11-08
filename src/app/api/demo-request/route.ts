@@ -16,20 +16,15 @@ export async function POST(request:NextRequest){
  const name=safe(body.name,100),school=safe(body.school,140),email=safe(body.email,254);
  const postcode=safe(body.postcode,30),site=safe(body.currentWebsite,250),notes=safe(body.notes,1200);
  if(!name||!school||!emailPattern.test(email)||!body.consent)return NextResponse.json({error:"Please enter your name, school name, valid email and confirm the privacy notice."},{status:400});
- if(!process.env.YOTION_DATABASE_URL){
+ if(!process.env.YOTION_SUPABASE_URL||!process.env.YOTION_SUPABASE_SECRET_KEY){
   const rows=[["Name",name],["School",school],["Email",email],["Town / postcode",postcode],["Website",site],["Notes",notes]].map(([k,v])=>"<tr><th style='text-align:left;padding:8px'>"+k+"</th><td style='padding:8px'>"+escapeHtml(v)+"</td></tr>").join("");
   try{await sendEmail(process.env.YOTION_ENQUIRY_TO||"andy@drivingschoolfinder.co.uk","Yotion demo request — "+school,"<h2>New demo request</h2><table>"+rows+"</table>",email);return NextResponse.json({ok:true,progressEnabled:false})}catch{return NextResponse.json({error:"We couldn't send your request. Please try again."},{status:502})}
  }
  const {token,hash}=newToken();let id:string;
  try{
-  const client=await db().connect();
-  try{
-   await client.query("begin");
-   const row=await client.query("insert into yotion.demo_requests(name,school,email,postcode,current_website,notes) values($1,$2,$3,$4,$5,$6) returning id",[name,school,email,postcode,site,notes]);id=row.rows[0].id;
-   await client.query("insert into yotion.access_tokens(request_id,token_hash,expires_at) values($1,$2,now()+interval '7 days')",[id,hash]);
-   await client.query("insert into yotion.status_events(request_id,status,note) values($1,'received','Request submitted')",[id]);
-   await client.query("commit");
-  }catch(error){await client.query("rollback");throw error}finally{client.release()}
+  const {data,error}=await db().rpc("yotion_create_demo_request",{p_name:name,p_school:school,p_email:email,p_postcode:postcode,p_website:site,p_notes:notes,p_token_hash:hash});
+  if(error||!data)throw error||new Error("No request ID returned");
+  id=String(data);
  }catch(error){console.error("Yotion database request failed",error);return NextResponse.json({error:"We couldn't save your request. Please try again."},{status:503})}
  const origin=process.env.YOTION_SITE_URL||new URL(request.url).origin;
  const link=origin+"/demo/progress?token="+encodeURIComponent(token);
