@@ -25,7 +25,7 @@ export async function POST(request:NextRequest){
   const {data,error}=await db().rpc("yotion_create_demo_request",{p_name:name,p_school:school,p_email:email,p_postcode:postcode,p_website:site,p_notes:notes,p_token_hash:hash});
   if(error||!data)throw error||new Error("No request ID returned");
   id=String(data);
- }catch(error){console.error("Yotion database request failed",error);return NextResponse.json({error:"We couldn't save your request. Please try again."},{status:503})}
+ }catch(error){console.error("Yotion database request failed",error);console.error("Yotion Supabase diagnostics",{urlHost:(()=>{try{return new URL(process.env.YOTION_SUPABASE_URL||"").hostname}catch{return "invalid-url"}})(),keyKind:(()=>{const k=process.env.YOTION_SUPABASE_SECRET_KEY||"";return k.startsWith("sb_secret_")?"sb_secret":k.startsWith("eyJ")?"legacy_jwt":k.startsWith("sb_publishable_")?"publishable":k.startsWith("Bearer ")?"bearer_prefixed":k.trim()!==k?"whitespace":k.length===0?"missing":"unrecognised"})(),keyLength:(process.env.YOTION_SUPABASE_SECRET_KEY||"").length,keyHasWhitespace:/\\s/.test(process.env.YOTION_SUPABASE_SECRET_KEY||"")});return NextResponse.json({error:"We couldn't save your request. Please try again."},{status:503})}
  const origin=process.env.YOTION_SITE_URL||new URL(request.url).origin;
  const link=origin+"/demo/progress?token="+encodeURIComponent(token);
  const rows=[["Name",name],["School",school],["Email",email],["Town / postcode",postcode],["Website",site],["Notes",notes]].map(([k,v])=>"<tr><th style='text-align:left;padding:8px'>"+k+"</th><td style='padding:8px'>"+escapeHtml(v)+"</td></tr>").join("");
