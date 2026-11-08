@@ -1,5 +1,5 @@
 import {NextRequest,NextResponse} from "next/server";
-import {db,newToken} from "@/lib/yotion-db";
+import {db,newToken} from "../../../lib/yotion-db";
 export const runtime="nodejs";
 const emailPattern=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const safe=(value:unknown,max:number)=>typeof value==="string"?value.trim().slice(0,max):"";
