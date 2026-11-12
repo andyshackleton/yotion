@@ -1,0 +1,2 @@
+import {NextRequest,NextResponse} from "next/server";
+export async function POST(request:NextRequest){const origin=request.headers.get("origin");if(origin&&origin!==new URL(request.url).origin)return new NextResponse("Forbidden",{status:403});const response=NextResponse.redirect(new URL("/admin/login",request.url),303);response.cookies.set("yotion_admin","",{path:"/admin",httpOnly:true,secure:true,sameSite:"lax",maxAge:0});return response}
