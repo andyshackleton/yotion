@@ -6,7 +6,7 @@ const safe=(value:unknown,max:number)=>typeof value==="string"?value.trim().slic
 const escapeHtml=(value:string)=>value.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]??c));
 async function sendEmail(to:string,subject:string,html:string,replyTo?:string){
  const response=await fetch("https://api.resend.com/emails",{method:"POST",headers:{Authorization:"Bearer "+process.env.RESEND_API_KEY,"Content-Type":"application/json"},body:JSON.stringify({from:process.env.YOTION_FROM_EMAIL,to:[to],...(replyTo?{reply_to:replyTo}:{}),subject,html})});
- if(!response.ok){console.error("Resend failed",response.status);throw new Error("Email delivery failed");}
+ if(!response.ok){let details="";try{const result=await response.json();details=JSON.stringify({name:result.name,message:result.message,statusCode:result.statusCode})}catch{}console.error("Yotion Resend delivery failed",{status:response.status,details});throw new Error("Email delivery failed");}
 }
 export async function POST(request:NextRequest){
  if(!process.env.RESEND_API_KEY||!process.env.YOTION_FROM_EMAIL)return NextResponse.json({error:"Demo requests are temporarily unavailable."},{status:503});
@@ -30,7 +30,7 @@ export async function POST(request:NextRequest){
  const link=origin+"/demo/progress?token="+encodeURIComponent(token);
  const rows=[["Name",name],["School",school],["Email",email],["Town / postcode",postcode],["Website",site],["Notes",notes]].map(([k,v])=>"<tr><th style='text-align:left;padding:8px'>"+k+"</th><td style='padding:8px'>"+escapeHtml(v)+"</td></tr>").join("");
  let mailWarning=false;
- try{await sendEmail(process.env.YOTION_ENQUIRY_TO||"andy@drivingschoolfinder.co.uk","Yotion demo request — "+school,"<h2>New demo request</h2><table>"+rows+"</table><p>Request ID: "+id+"</p>",email)}catch{mailWarning=true}
- try{await sendEmail(email,"We've received your Yotion demo request","<p>Hello "+escapeHtml(name)+",</p><p>Thank you for requesting a personalised demonstration for "+escapeHtml(school)+". We'll review your request within one working day and aim to prepare your demo within two working days once we have the information needed.</p><p><a href='"+escapeHtml(link)+"'>View your private request progress</a></p><p>This link expires after seven days. Keep it private. If it expires, reply to this email to request a new link.</p><p>Yotion</p>")}catch{mailWarning=true}
+ try{await sendEmail(process.env.YOTION_ENQUIRY_TO||"andy@drivingschoolfinder.co.uk","Yotion demo request — "+school,"<h2>New demo request</h2><table>"+rows+"</table><p>Request ID: "+id+"</p>",email)}catch(error){mailWarning=true;console.error("Yotion admin notification failed",error)}
+ try{await sendEmail(email,"We've received your Yotion demo request","<p>Hello "+escapeHtml(name)+",</p><p>Thank you for requesting a personalised demonstration for "+escapeHtml(school)+". We'll review your request within one working day and aim to prepare your demo within two working days once we have the information needed.</p><p><a href='"+escapeHtml(link)+"'>View your private request progress</a></p><p>This link expires after seven days. Keep it private. If it expires, reply to this email to request a new link.</p><p>Yotion</p>")}catch(error){mailWarning=true;console.error("Yotion customer confirmation failed",error)}
  return NextResponse.json({ok:true,mailWarning});
 }
