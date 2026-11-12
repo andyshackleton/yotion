@@ -1,0 +1,12 @@
+import {NextRequest,NextResponse} from "next/server";
+import {isAdmin} from "../../lib/yotion-admin-auth";
+import {db} from "../../lib/yotion-db";
+export const dynamic="force-dynamic";
+const escapeHtml=(s:unknown)=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]??c));
+export async function GET(request:NextRequest){
+ if(!await isAdmin())return NextResponse.redirect(new URL("/admin/login",request.url));
+ let rows:Record<string,unknown>[]=[];let error="";
+ try{const result=await db().rpc("yotion_admin_list_demo_requests");if(result.error)throw result.error;rows=result.data||[]}catch(e){console.error("Admin list failed",e);error="Unable to load requests. Please try again."}
+ const html=`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Yotion admin</title><style>body{font:16px/1.5 system-ui;background:#f7f9f4;color:#19332c;margin:0}header,main{max-width:1100px;margin:auto;padding:24px}header{display:flex;justify-content:space-between;align-items:center}h1{font:normal 44px Georgia,serif}table{border-collapse:collapse;width:100%;background:white;border-radius:12px;overflow:hidden}th,td{text-align:left;padding:15px;border-bottom:1px solid #e5ebe4}th{font-size:12px;text-transform:uppercase;letter-spacing:.1em}a{color:#155d48}p{color:#526459}@media(max-width:650px){table{display:block;overflow-x:auto}}</style></head><body><header><strong>Yotion / Admin</strong><form method="post" action="/admin/logout"><button>Sign out</button></form></header><main><h1>Demo requests</h1><p>Latest requests submitted to Yotion.</p>${error?"<p role='alert'>"+escapeHtml(error)+"</p>":""}<table><thead><tr><th>School</th><th>Contact</th><th>Status</th><th>Received</th></tr></thead><tbody>${rows.map(r=>"<tr><td><strong>"+escapeHtml(r.school)+"</strong></td><td>"+escapeHtml(r.name)+"<div>"+escapeHtml(r.email)+"</div></td><td>"+escapeHtml(r.status)+"</td><td>"+escapeHtml(r.created_at)+"</td></tr>").join("")||"<tr><td colspan='4'>No requests yet</td></tr>"}</tbody></table></main></body></html>`;
+ return new NextResponse(html,{headers:{"Content-Type":"text/html; charset=utf-8","Cache-Control":"no-store","X-Frame-Options":"DENY","Referrer-Policy":"no-referrer"}});
+}
