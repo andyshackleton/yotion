@@ -10,6 +10,8 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
  // Customer demonstrations must not contain Yotion's sample-only marketing controls.
  page=page.replace(/<aside class="yotion-example-cta"[^>]*>[\s\S]*?<\/aside>/,"");
  page=page.replace(/<div class="theme-demo-bar">[\s\S]*?<\/select><\/div><\/div>/,"");
+ page=page.replace(/<section class="section" id="greenlight-privacy">[\s\S]*?<\/section>/,"");
+ page=page.replace(/<a[^>]*href="#greenlight-privacy"[^>]*>[\s\S]*?<\/a>/g,"");
 
  const replace=(from:string,to:string)=>{page=page.replace(from,to)};
  replace("<title>Greenlight Driving | Automatic driving lessons in Liverpool</title>","<title>"+brand+" | Driving lessons</title>");
