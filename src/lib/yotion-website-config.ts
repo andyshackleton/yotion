@@ -23,12 +23,12 @@ export function starterWebsiteConfig(input:{schoolName:string;colour?:string;ema
  return {
   version:1,
   branding:{schoolName:input.schoolName,colour},
-  hero:{eyebrow:"Driving lessons",headline:"Learn to drive with confidence",description:"Friendly driving lessons with patient, supportive tuition. This is example copy for Yotion to customise.",primaryCtaLabel:"Ask about lessons",primaryCtaTarget:"#enquire"},
+  hero:{eyebrow:"AUTOMATIC DRIVING LESSONS",headline:"Your road to feeling confident.",description:"A calm start. A clear plan. Lessons that move at your pace.",primaryCtaLabel:"Ask about your first lesson",primaryCtaTarget:"#enquire"},
   lessons:{heading:"Driving lessons",intro:"Replace these example services with the instructor's confirmed lesson options.",items:[]},
-  instructor:{heading:"Meet your instructor",biography:"Instructor biography to be confirmed."},
+  instructor:{heading:"Meet your instructor",biography:"Example: patient, supportive tuition with a clear plan at your own pace. Replace with the instructor's actual biography."},
   teachingAreas:{heading:"Where we teach",areas:input.location?[input.location]:[]},
   reviews:{heading:"What learners say",items:[]},
-  faq:{heading:"Common questions",items:[]},
+  faq:{heading:"Common questions",items:[{id:"sample-faq-1",question:"I'm nervous. Can I take things slowly?",answer:"Example answer: lessons can be planned around your confidence and experience. Confirm with the instructor."},{id:"sample-faq-2",question:"Do you teach manual?",answer:"Example answer: this template is for automatic lessons. Confirm the instructor's actual transmission options."}]},
   contact:{heading:"Get in touch",description:"Ask about lesson availability and next steps.",email:input.email},
   assistant:{enabled:false}
  };
