@@ -16,7 +16,10 @@ export async function POST(request:NextRequest){
  try{body=await request.json()}catch{return NextResponse.json({error:"Invalid request."},{status:400})}
  if(body.website_url)return NextResponse.json({ok:true});
  const name=safe(body.name,100),school=safe(body.school,140),email=safe(body.email,254);
- const postcode=safe(body.postcode,30),site=safe(body.currentWebsite,250),notes=safe(body.notes,1200);\n const brandColour=safe(body.brandColour,20)||"green";\n const themes=["green","blue","purple","charcoal","emerald","red","orange","amber","pink","burgundy","navy"];\n if(!themes.includes(brandColour))return NextResponse.json({error:"Please select a valid brand colour."},{status:400});
+ const postcode=safe(body.postcode,30),site=safe(body.currentWebsite,250),notes=safe(body.notes,1200);
+ const brandColour=safe(body.brandColour,20)||"green";
+ const themes=["green","blue","purple","charcoal","emerald","red","orange","amber","pink","burgundy","navy"];
+ if(!themes.includes(brandColour))return NextResponse.json({error:"Please select a valid brand colour."},{status:400});
  if(!name||!school||!emailPattern.test(email)||!body.consent)return NextResponse.json({error:"Please enter your name, school name, valid email and confirm the privacy notice."},{status:400});
  if(!process.env.YOTION_SUPABASE_URL||!process.env.YOTION_SUPABASE_SECRET_KEY){
   const rows=[["Name",name],["School",school],["Email",email],["Town / postcode",postcode],["Website",site],["Brand colour",brandColour],["Notes",notes]].map(([k,v])=>"<tr><th style='text-align:left;padding:8px'>"+k+"</th><td style='padding:8px'>"+escapeHtml(v)+"</td></tr>").join("");
