@@ -1,3 +1,4 @@
+import {starterWebsiteConfig} from "../../../lib/yotion-website-config";
 import {demoLink} from "../../../lib/yotion-demo-url";
 import {createHash,randomBytes} from "node:crypto";
 import {NextRequest,NextResponse} from "next/server";
@@ -35,6 +36,8 @@ export async function POST(request:NextRequest){
   if(draft.error||!draft.data?.slug)throw draft.error||new Error("Starter demo lookup failed");
   const demoUrl=demoLink(String(draft.data.slug),demoToken);
   const saved=await db().rpc("yotion_admin_update_demo_request",{p_id:id,p_status:"received",p_note:null,p_demo_url:demoUrl});
+  const seeded=await db().rpc("yotion_admin_save_website_config",{p_request_id:id,p_config:starterWebsiteConfig({schoolName:school,colour:brandColour,email,location:postcode})});
+  if(seeded.error||seeded.data!==true)throw seeded.error||new Error("Starter website configuration save failed");
   if(saved.error||saved.data!==true)throw saved.error||new Error("Starter demo URL save failed");
  }catch(error){console.error("Yotion database request failed",error);console.error("Yotion Supabase diagnostics",{urlHost:(()=>{try{return new URL(process.env.YOTION_SUPABASE_URL||"").hostname}catch{return "invalid-url"}})(),keyKind:(()=>{const k=process.env.YOTION_SUPABASE_SECRET_KEY||"";return k.startsWith("sb_secret_")?"sb_secret":k.startsWith("eyJ")?"legacy_jwt":k.startsWith("sb_publishable_")?"publishable":k.startsWith("Bearer ")?"bearer_prefixed":k.trim()!==k?"whitespace":k.length===0?"missing":"unrecognised"})(),keyLength:(process.env.YOTION_SUPABASE_SECRET_KEY||"").length,keyHasWhitespace:/\\s/.test(process.env.YOTION_SUPABASE_SECRET_KEY||"")});return NextResponse.json({error:"We couldn't save your request. Please try again."},{status:503})}
  const origin=process.env.YOTION_SITE_URL||new URL(request.url).origin;
