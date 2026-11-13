@@ -7,6 +7,10 @@ const colours:Record<string,string>={green:"#087f78",blue:"#1459a2",purple:"#754
 export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:boolean}):string{
  const brand=esc(c.branding.schoolName);
  let page=greenlightOriginalHtml;
+ // Customer demonstrations must not contain Yotion's sample-only marketing controls.
+ page=page.replace(/<aside class="yotion-example-cta"[^>]*>[\s\S]*?<\/aside>/,"");
+ page=page.replace(/<div class="theme-demo-bar">[\s\S]*?<\/select><\/div><\/div>/,"");
+
  const replace=(from:string,to:string)=>{page=page.replace(from,to)};
  replace("<title>Greenlight Driving | Automatic driving lessons in Liverpool</title>","<title>"+brand+" | Driving lessons</title>");
  replace('content="Friendly automatic driving lessons in Liverpool. Explore prices, areas and patient tuition, or ask the Greenlight assistant a quick question."','content="'+esc(c.hero.description)+'"');
@@ -19,6 +23,5 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
  replace('<strong>Greenlight Driving</strong>','<strong>'+brand+'</strong>');
  const accent=colours[c.branding.colour]||colours.green;
  replace('</head>','<style>:root{--palette-087f78:'+accent+';--teal:'+accent+'} .yotion-draft-banner{position:relative;z-index:100;background:#152b36;color:white;text-align:center;padding:10px;font:600 13px system-ui}</style><meta name="robots" content="noindex,nofollow">'+(options.published?'<meta name="yotion-demo-ready" content="true">':'')+'</head>');
- if(!options.published)replace('<body>','<body><div class="yotion-draft-banner">Private Yotion draft · Not published</div>');
  return page;
 }
