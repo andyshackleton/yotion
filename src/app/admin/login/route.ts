@@ -1,3 +1,4 @@
+import {isSameOriginPost} from "../../../lib/yotion-admin-csrf";
 import {adminBaseUrl} from "../../../lib/yotion-admin-url";
 import {NextRequest,NextResponse} from "next/server";
 import {adminEmail,newAdminToken,isAdmin} from "../../../lib/yotion-admin-auth";
@@ -6,7 +7,7 @@ const html=(message:string)=>`<!doctype html><html><head><meta name="viewport" c
 const response=(message:string,status=200)=>new NextResponse(html(message),{status,headers:{"Content-Type":"text/html; charset=utf-8","Cache-Control":"no-store","X-Frame-Options":"DENY"}});
 export async function GET(request:NextRequest){if(await isAdmin())return NextResponse.redirect(new URL("/admin",request.url));return response("")}
 export async function POST(request:NextRequest){
- const origin=request.headers.get("origin");if(origin&&origin!==new URL(request.url).origin)return response("Unable to process this request.",403);
+ const origin=request.headers.get("origin");if(!isSameOriginPost(request))return response("Unable to process this request.",403);
  const data=await request.formData();const email=String(data.get("email")||"").trim().toLowerCase();
  if(email===adminEmail()){
   const token=newAdminToken();const url=new URL("/admin/verify",adminBaseUrl());url.searchParams.set("token",token);
