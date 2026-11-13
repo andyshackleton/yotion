@@ -1,3 +1,4 @@
+import {starterWebsiteConfig} from "../../../../../lib/yotion-website-config";
 import {isSameOriginPost} from "../../../../../lib/yotion-admin-csrf";
 import {demoLink,parseDemoLink} from "../../../../../lib/yotion-demo-url";
 import {NextRequest,NextResponse} from "next/server";
@@ -38,6 +39,10 @@ export async function POST(request:NextRequest,context:{params:Promise<{id:strin
   const hash=createHash("sha256").update(token).digest("hex");
   const upsert=await db().rpc("yotion_admin_upsert_website_demo",{p_request_id:id,p_slug:slug,p_school:school,p_theme:theme,p_headline:headline,p_intro:intro,p_lessons:lessons,p_areas:areas,p_email:String(requestData.request.email),p_access_hash:hash});
   if(upsert.error||upsert.data!==true)throw upsert.error||Error("Unable to save demo");
+  if(!existing.data){
+   const seeded=await db().rpc("yotion_admin_save_website_config",{p_request_id:id,p_config:starterWebsiteConfig({schoolName:school,colour:theme,email:String(requestData.request.email),location:areas})});
+   if(seeded.error||seeded.data!==true)throw seeded.error||Error("Unable to seed starter content");
+  }
   const url=demoLink(slug,token);
   const saved=await db().rpc("yotion_admin_update_demo_request",{p_id:id,p_status:"preparing",p_note:"Personalised demonstration draft saved",p_demo_url:url});
   if(saved.error)throw saved.error;
