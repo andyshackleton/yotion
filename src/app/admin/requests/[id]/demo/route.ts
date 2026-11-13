@@ -1,3 +1,4 @@
+import {demoLink,parseDemoLink} from "../../../../../lib/yotion-demo-url";
 import {NextRequest,NextResponse} from "next/server";
 import {createHash,randomBytes} from "node:crypto";
 import {isAdmin} from "../../../../../lib/yotion-admin-auth";
@@ -30,13 +31,13 @@ export async function POST(request:NextRequest,context:{params:Promise<{id:strin
   // The full token is retained in the saved demo URL on the request, never in the demo RPC response.
   let token="";
   const oldUrl=String(requestData.request.demo_url||"");
-  if(existing.data&&oldUrl){try{const u=new URL(oldUrl);const segments=u.pathname.split("/").filter(Boolean);if(u.hostname==="demo.yotion.co.uk"&&segments.length===2)token=segments[1]}catch{}}
+  if(existing.data&&oldUrl)token=parseDemoLink(oldUrl)?.token||"";
   if(existing.data&&!token)return back(request,id,"missingtoken");
   if(!token)token=randomBytes(24).toString("base64url");
   const hash=createHash("sha256").update(token).digest("hex");
   const upsert=await db().rpc("yotion_admin_upsert_website_demo",{p_request_id:id,p_slug:slug,p_school:school,p_theme:theme,p_headline:headline,p_intro:intro,p_lessons:lessons,p_areas:areas,p_email:String(requestData.request.email),p_access_hash:hash});
   if(upsert.error||upsert.data!==true)throw upsert.error||Error("Unable to save demo");
-  const url="https://demo.yotion.co.uk/"+slug+"/"+token;
+  const url=demoLink(slug,token);
   const saved=await db().rpc("yotion_admin_update_demo_request",{p_id:id,p_status:"preparing",p_note:"Personalised demonstration draft saved",p_demo_url:url});
   if(saved.error)throw saved.error;
   return back(request,id,"saved");
