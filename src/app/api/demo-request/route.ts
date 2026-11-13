@@ -1,3 +1,4 @@
+import {createHash,randomBytes} from "node:crypto";
 import {NextRequest,NextResponse} from "next/server";
 import {db,newToken} from "../../../lib/yotion-db";
 export const runtime="nodejs";
@@ -15,17 +16,17 @@ export async function POST(request:NextRequest){
  try{body=await request.json()}catch{return NextResponse.json({error:"Invalid request."},{status:400})}
  if(body.website_url)return NextResponse.json({ok:true});
  const name=safe(body.name,100),school=safe(body.school,140),email=safe(body.email,254);
- const postcode=safe(body.postcode,30),site=safe(body.currentWebsite,250),notes=safe(body.notes,1200);
+ const postcode=safe(body.postcode,30),site=safe(body.currentWebsite,250),notes=safe(body.notes,1200);\n const brandColour=safe(body.brandColour,20)||"green";\n const themes=["green","blue","purple","charcoal","emerald","red","orange","amber","pink","burgundy","navy"];\n if(!themes.includes(brandColour))return NextResponse.json({error:"Please select a valid brand colour."},{status:400});
  if(!name||!school||!emailPattern.test(email)||!body.consent)return NextResponse.json({error:"Please enter your name, school name, valid email and confirm the privacy notice."},{status:400});
  if(!process.env.YOTION_SUPABASE_URL||!process.env.YOTION_SUPABASE_SECRET_KEY){
-  const rows=[["Name",name],["School",school],["Email",email],["Town / postcode",postcode],["Website",site],["Notes",notes]].map(([k,v])=>"<tr><th style='text-align:left;padding:8px'>"+k+"</th><td style='padding:8px'>"+escapeHtml(v)+"</td></tr>").join("");
+  const rows=[["Name",name],["School",school],["Email",email],["Town / postcode",postcode],["Website",site],["Brand colour",brandColour],["Notes",notes]].map(([k,v])=>"<tr><th style='text-align:left;padding:8px'>"+k+"</th><td style='padding:8px'>"+escapeHtml(v)+"</td></tr>").join("");
   try{await sendEmail(process.env.YOTION_ENQUIRY_TO||"andy@drivingschoolfinder.co.uk","Yotion demo request — "+school,"<h2>New demo request</h2><table>"+rows+"</table>",email);return NextResponse.json({ok:true,progressEnabled:false})}catch{return NextResponse.json({error:"We couldn't send your request. Please try again."},{status:502})}
  }
- const {token,hash}=newToken();let id:string;
+ const {token,hash}=newToken();const demoToken=randomBytes(24).toString("base64url");const demoHash=createHash("sha256").update(demoToken).digest("hex");let id:string;
  try{
-  const {data,error}=await db().rpc("yotion_create_demo_request",{p_name:name,p_school:school,p_email:email,p_postcode:postcode,p_website:site,p_notes:notes,p_token_hash:hash});
+  const {data,error}=await db().rpc("yotion_create_request_with_demo",{p_name:name,p_school:school,p_email:email,p_postcode:postcode,p_website:site,p_notes:notes,p_token_hash:hash,p_brand_colour:brandColour,p_demo_access_hash:demoHash});
   if(error||!data)throw error||new Error("No request ID returned");
-  id=String(data);
+  id=String(data);\n  const draft=await db().rpc("yotion_admin_get_website_demo",{p_request_id:id});\n  if(draft.error||!draft.data?.slug)throw draft.error||new Error("Starter demo lookup failed");\n  const demoUrl="https://demo.yotion.co.uk/"+draft.data.slug+"/"+demoToken;\n  const saved=await db().rpc("yotion_admin_update_demo_request",{p_id:id,p_status:"received",p_note:null,p_demo_url:demoUrl});\n  if(saved.error||saved.data!==true)throw saved.error||new Error("Starter demo URL save failed");
  }catch(error){console.error("Yotion database request failed",error);console.error("Yotion Supabase diagnostics",{urlHost:(()=>{try{return new URL(process.env.YOTION_SUPABASE_URL||"").hostname}catch{return "invalid-url"}})(),keyKind:(()=>{const k=process.env.YOTION_SUPABASE_SECRET_KEY||"";return k.startsWith("sb_secret_")?"sb_secret":k.startsWith("eyJ")?"legacy_jwt":k.startsWith("sb_publishable_")?"publishable":k.startsWith("Bearer ")?"bearer_prefixed":k.trim()!==k?"whitespace":k.length===0?"missing":"unrecognised"})(),keyLength:(process.env.YOTION_SUPABASE_SECRET_KEY||"").length,keyHasWhitespace:/\\s/.test(process.env.YOTION_SUPABASE_SECRET_KEY||"")});return NextResponse.json({error:"We couldn't save your request. Please try again."},{status:503})}
  const origin=process.env.YOTION_SITE_URL||new URL(request.url).origin;
  const link=origin+"/demo/progress?token="+encodeURIComponent(token);
