@@ -16,7 +16,9 @@ export async function GET(request:NextRequest,context:{params:Promise<{slug:stri
  fallback.hero.description=String(demo.introduction||fallback.hero.description);
  fallback.lessons.intro=String(demo.lesson_details||fallback.lessons.intro);
  fallback.teachingAreas.areas=String(demo.teaching_areas||"").split(/[,\\n]/).map(x=>x.trim()).filter(Boolean);
- const config=isWebsiteConfig(demo.config)?demo.config:fallback;
+ const config=isWebsiteConfig(demo.config)
+  ? {...demo.config,branding:{...demo.config.branding,...fallback.branding}}
+  : fallback;
  const html=renderDrivingSchoolWebsite(config,{published:isPublished});
  return new NextResponse(html,{headers:{"Content-Type":"text/html; charset=utf-8","X-Robots-Tag":"noindex, nofollow","Cache-Control":"no-store","X-Content-Type-Options":"nosniff","Referrer-Policy":"no-referrer"}});
 }

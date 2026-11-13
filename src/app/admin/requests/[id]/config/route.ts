@@ -2,7 +2,7 @@ import {isSameOriginPost} from "../../../../../lib/yotion-admin-csrf";
 import {NextRequest,NextResponse} from "next/server";
 import {isAdmin} from "../../../../../lib/yotion-admin-auth";
 import {db} from "../../../../../lib/yotion-db";
-import {starterWebsiteConfig,isWebsiteConfig,BRAND_COLOURS} from "../../../../../lib/yotion-website-config";
+import {starterWebsiteConfig,isWebsiteConfig} from "../../../../../lib/yotion-website-config";
 export const dynamic="force-dynamic";
 const back=(r:NextRequest,id:string,result:string)=>NextResponse.redirect(new URL("/admin/requests/"+id+"?config="+result,r.url),303);
 const value=(f:FormData,k:string,max:number)=>String(f.get(k)||"").trim().slice(0,max);
@@ -16,10 +16,7 @@ export async function POST(request:NextRequest,context:{params:Promise<{id:strin
   const [demo,req]=await Promise.all([db().rpc("yotion_admin_get_website_demo",{p_request_id:id}),db().rpc("yotion_admin_get_demo_request",{p_id:id})]);
   if(demo.error||req.error||!demo.data||!req.data?.request)return back(request,id,"missing");
   const original=isWebsiteConfig(demo.data.config)?demo.data.config:starterWebsiteConfig({schoolName:String(demo.data.school_name),colour:String(demo.data.theme),email:String(req.data.request.email)});
-  const colour=value(f,"colour",30);if(!BRAND_COLOURS.includes(colour as typeof BRAND_COLOURS[number]))return back(request,id,"invalid");
   const config=structuredClone(original);
-  config.branding.schoolName=value(f,"school",120);
-  config.branding.colour=colour as typeof config.branding.colour;
   config.hero.eyebrow=value(f,"eyebrow",100);
   config.hero.headline=value(f,"headline",180);
   config.hero.description=value(f,"intro",600);
@@ -38,7 +35,7 @@ export async function POST(request:NextRequest,context:{params:Promise<{id:strin
   config.contact.heading=value(f,"contact_heading",100);
   config.contact.description=value(f,"contact_intro",600);
   config.contact.email=value(f,"contact_email",250);
-  if(!config.branding.schoolName||!config.hero.headline||!config.contact.email||!config.contact.email.includes("@"))return back(request,id,"invalid");
+  if(!config.hero.headline||!config.contact.email||!config.contact.email.includes("@"))return back(request,id,"invalid");
   const result=await db().rpc("yotion_admin_save_website_config",{p_request_id:id,p_config:config});
   if(result.error||result.data!==true)throw result.error||Error("Save failed");
   // Saving structured content returns a published demo to draft; preserve the access URL.
