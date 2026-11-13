@@ -1,3 +1,4 @@
+import {isSameOriginPost} from "../../../../../lib/yotion-admin-csrf";
 import {parseDemoLink,previewDemoLink} from "../../../../../lib/yotion-demo-url";
 import {NextRequest,NextResponse} from "next/server";
 import {isAdmin} from "../../../../../lib/yotion-admin-auth";
@@ -7,7 +8,7 @@ const redirect=(request:NextRequest,id:string,result:string)=>NextResponse.redir
 export async function POST(request:NextRequest,context:{params:Promise<{id:string}>}){
  if(!await isAdmin())return NextResponse.redirect(new URL("/admin/login",request.url),303);
  const origin=request.headers.get("origin");
- if(!origin||origin!==new URL(request.url).origin)return new NextResponse("Forbidden",{status:403});
+ if(!isSameOriginPost(request))return new NextResponse("Forbidden",{status:403});
  const {id}=await context.params;
  if(!/^[0-9a-f-]{36}$/i.test(id))return new NextResponse("Invalid request",{status:400});
  const form=await request.formData();
