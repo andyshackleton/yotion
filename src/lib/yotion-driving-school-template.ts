@@ -68,7 +68,7 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
 
 
  // Personalise the lettermark and all visible assistant branding.
- const initial=Array.from(c.branding.schoolName.trim())[0]?.toLocaleUpperCase("en-GB")||"D";
+ const initial=Array.from(c.branding.schoolName.trim())[0]?.toLocaleLowerCase("en-GB")||"d";
  page=page.replace(/(<span class="school-icon" aria-hidden="true">)[^<]*(<\/span>)/,(_,open,close)=>open+esc(initial)+close);
  page=page.replace(/(<span class="chat-avatar" aria-hidden="true">)[^<]*(<\/span>)/,(_,open,close)=>open+esc(initial)+close);
  page=page.replace(/Ask Greenlight/g,()=> 'Ask '+brand);
@@ -101,6 +101,6 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
   page=page.slice(0,chatStart)+'<script>'+script+'</script>'+page.slice(chatEnd+9);
  }
 
- replace('</head>','<style>.yotion-draft-banner{position:relative;z-index:100;background:#152b36;color:white;text-align:center;padding:10px;font:600 13px system-ui}</style><meta name="robots" content="noindex,nofollow">'+(options.published?'<meta name="yotion-demo-ready" content="true">':'')+'</head>');
+ replace('</head>','<style>#yotion-demo-enquiry :is(input,select,textarea){font-size:16px}.yotion-draft-banner{position:relative;z-index:100;background:#152b36;color:white;text-align:center;padding:10px;font:600 13px system-ui}</style><meta name="robots" content="noindex,nofollow">'+(options.published?'<meta name="yotion-demo-ready" content="true">':'')+'</head>');
  return page;
 }
