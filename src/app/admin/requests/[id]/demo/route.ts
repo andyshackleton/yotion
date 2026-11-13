@@ -1,3 +1,4 @@
+import {isSameOriginPost} from "../../../../../lib/yotion-admin-csrf";
 import {demoLink,parseDemoLink} from "../../../../../lib/yotion-demo-url";
 import {NextRequest,NextResponse} from "next/server";
 import {createHash,randomBytes} from "node:crypto";
@@ -7,7 +8,7 @@ export const dynamic="force-dynamic";
 const back=(r:NextRequest,id:string,result:string)=>NextResponse.redirect(new URL("/admin/requests/"+id+"?demo="+result,r.url),303);
 export async function POST(request:NextRequest,context:{params:Promise<{id:string}>}){
  if(!await isAdmin())return NextResponse.redirect(new URL("/admin/login",request.url),303);
- if(request.headers.get("origin")!==new URL(request.url).origin)return new NextResponse("Forbidden",{status:403});
+ if(!isSameOriginPost(request))return new NextResponse("Forbidden",{status:403});
  const {id}=await context.params;if(!/^[0-9a-f-]{36}$/i.test(id))return new NextResponse("Invalid request",{status:400});
  const f=await request.formData(),action=String(f.get("action")||"");
  try{
