@@ -1,3 +1,4 @@
+import {isSameOriginPost} from "../../../../../lib/yotion-admin-csrf";
 import {NextRequest,NextResponse} from "next/server";
 import {isAdmin} from "../../../../../lib/yotion-admin-auth";
 import {db} from "../../../../../lib/yotion-db";
@@ -8,7 +9,7 @@ const value=(f:FormData,k:string,max:number)=>String(f.get(k)||"").trim().slice(
 const lines=(s:string)=>s.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
 export async function POST(request:NextRequest,context:{params:Promise<{id:string}>}){
  if(!await isAdmin())return NextResponse.redirect(new URL("/admin/login",request.url),303);
- if(request.headers.get("origin")!==new URL(request.url).origin)return new NextResponse("Forbidden",{status:403});
+ if(!isSameOriginPost(request))return new NextResponse("Forbidden",{status:403});
  const {id}=await context.params;if(!/^[0-9a-f-]{36}$/i.test(id))return new NextResponse("Invalid request",{status:400});
  try{
   const f=await request.formData();
