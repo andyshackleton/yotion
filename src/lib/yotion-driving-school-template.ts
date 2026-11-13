@@ -43,13 +43,23 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
  const faqItems=c.faq.items.map(x=>'<details><summary>'+esc(x.question)+'</summary><p>'+esc(x.answer)+'</p></details>').join("");
  replaceSection('<section class="section" id="questions">','<section class="section soft" id="enquire">',
   c.faq.items.length?wrap('questions',c.faq.heading,faqItems):'');
- // The original sample form only copies an enquiry and must not masquerade as a
- // functioning lead capture system. Use a genuine mailto action until delivery exists.
- const email=c.contact.email.trim();
- const contactLink=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-  ?'<a class="btn" href="mailto:'+encodeURIComponent(email)+'?subject=Driving%20lesson%20enquiry">Email the instructor</a>':'';
+ // Keep the original enquiry form layout, but never send or store test details.
+ // The browser explicitly confirms what would happen after production activation.
+ const form='<form class="form-card" id="yotion-demo-enquiry">'+
+  '<h3>Tell us what would work.</h3><p class="fine">Demonstration only — no details are sent or saved.</p>'+
+  '<label for="learner-name">Your name</label><input id="learner-name" name="name" required maxlength="120" autocomplete="name">'+
+  '<label for="learner-email">Email address</label><input id="learner-email" name="email" type="email" required maxlength="254" autocomplete="email">'+
+  '<label for="learner-area">Your area / postcode</label><input id="learner-area" name="area" required maxlength="100">'+
+  '<label for="learner-experience">Driving experience</label><select id="learner-experience" name="experience"><option>Complete beginner</option><option>Some lessons</option><option>Returning to driving</option></select>'+
+  '<label for="learner-times">Preferred lesson times</label><textarea id="learner-times" name="availability" rows="3" maxlength="500"></textarea>'+
+  '<label for="learner-notes">Anything else?</label><textarea id="learner-notes" name="notes" rows="3" maxlength="1000"></textarea>'+
+  '<button class="btn full" type="submit">Send my enquiry</button>'+
+  '<p id="yotion-enquiry-confirmation" role="status" aria-live="polite" hidden style="padding:14px;border-radius:10px;background:#e6f5ef;color:#152b36">In production, these details would be emailed securely to the driving instructor. This is a demonstration: nothing has been sent or stored.</p></form>';
+ const enquiry='<div class="wrap form-layout"><div><div class="eyebrow">ONE SMALL NEXT STEP</div><h2>'+esc(c.contact.heading)+'</h2><p>'+esc(c.contact.description)+'</p></div>'+form+'</div>';
  replaceSection('<section class="section soft" id="enquire">','</main>',
-  wrap('enquire',c.contact.heading,'<p>'+esc(c.contact.description)+'</p>'+contactLink,true));
+  '<section class="section soft" id="enquire">'+enquiry+'</section>');
+ const demoScript='<script>(function(){var f=document.getElementById("yotion-demo-enquiry");if(!f)return;f.addEventListener("submit",function(e){e.preventDefault();if(!f.reportValidity())return;var n=document.getElementById("yotion-enquiry-confirmation");n.hidden=false;n.scrollIntoView({behavior:"smooth",block:"nearest"});});})();</script>';
+ replace('</body>',demoScript+'</body>');
  page=page.replace(/Fictional demonstration school · Liverpool/g,'');
  page=page.replace(/<p class="footer-demo">[\s\S]*?<\/p>/g,'');
 
