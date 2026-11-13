@@ -48,7 +48,7 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
  const email=c.contact.email.trim();
  const contactLink=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
   ?'<a class="btn" href="mailto:'+encodeURIComponent(email)+'?subject=Driving%20lesson%20enquiry">Email the instructor</a>':'';
- replaceSection('<section class="section soft" id="enquire">','<section class="section" id="greenlight-privacy">',
+ replaceSection('<section class="section soft" id="enquire">','</main>',
   wrap('enquire',c.contact.heading,'<p>'+esc(c.contact.description)+'</p>'+contactLink,true));
  page=page.replace(/Fictional demonstration school · Liverpool/g,'');
  page=page.replace(/<p class="footer-demo">[\s\S]*?<\/p>/g,'');
