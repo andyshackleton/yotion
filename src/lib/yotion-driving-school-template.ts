@@ -63,6 +63,38 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
  page=page.replace(/Fictional demonstration school · Liverpool/g,'');
  page=page.replace(/<p class="footer-demo">[\s\S]*?<\/p>/g,'');
 
+
+ // Personalise the lettermark and all visible assistant branding.
+ const initial=Array.from(c.branding.schoolName.trim())[0]?.toLocaleUpperCase("en-GB")||"D";
+ page=page.replace(/(<span class="school-icon" aria-hidden="true">)[^<]*(<\/span>)/,'$1'+esc(initial)+'$2');
+ page=page.replace(/(<span class="chat-avatar" aria-hidden="true">)[^<]*(<\/span>)/,'$1'+esc(initial)+'$2');
+ page=page.replace(/Ask Greenlight/g,'Ask '+brand);
+ // The original chatbot script contains Greenlight-specific prices, locations and
+ // fictional answers. Replace it with a local FAQ assistant sourced only from config.
+ const chatStart=page.indexOf('<script>',page.indexOf('id="chat-dialog"'));
+ const chatEnd=chatStart<0?-1:page.indexOf('</script>',chatStart);
+ if(chatStart>=0&&chatEnd>chatStart){
+  const answers=[
+   ...c.faq.items.map(x=>({question:x.question,answer:x.answer})),
+   {question:"What lessons do you offer?",answer:c.lessons.items.map(x=>x.title+(x.price?' — '+x.price:'')+(x.description?'. '+x.description:'')).join(' ')||c.lessons.intro},
+   {question:"Where do you teach?",answer:c.teachingAreas.areas.join(', ')||"Please contact the instructor to confirm teaching areas."},
+   {question:"How do I enquire?",answer:"Use the contact form on this page. During this demonstration, it shows a confirmation rather than sending your details."}
+  ];
+  const script='(function(){'+
+   'var d=document.getElementById("chat-dialog"),log=document.getElementById("chat-log"),suggest=document.getElementById("chat-suggestions"),form=document.getElementById("chat-form"),input=document.getElementById("chat-message");'+
+   'if(!d||!log||!suggest||!form||!input)return;'+
+   'var entries='+JSON.stringify(answers).replace(/</g,"\\u003c")+';'+
+   'function msg(value,who){var p=document.createElement("p");p.className=who==="visitor"?"chat-user-message":"chat-assistant-message";p.textContent=value;log.appendChild(p);log.scrollTop=log.scrollHeight;}'+
+   'function reply(q){msg(q,"visitor");var clean=q.toLowerCase().replace(/[^a-z0-9 ]/g," ").trim();var words=clean.split(/\\s+/).filter(function(w){return w.length>3});var ranked=entries.map(function(e){var title=e.question.toLowerCase();var score=words.filter(function(w){return title.includes(w)}).length;return {e:e,score:score}}).sort(function(a,b){return b.score-a.score});msg(ranked.length&&ranked[0].score>0?ranked[0].e.answer:"I don’t have a confirmed answer to that question. Please use the enquiry form to ask the instructor.");}'+
+   'function open(){if(!d.open)d.showModal();if(!log.children.length)msg('+JSON.stringify(c.assistant.welcomeMessage||"Hello! Ask me about lessons, teaching areas or how to enquire.")+');input.focus();}'+
+   'document.querySelectorAll("[data-open-chat]").forEach(function(b){b.addEventListener("click",open)});'+
+   'var close=document.getElementById("chat-close");if(close)close.addEventListener("click",function(){d.close()});'+
+   'form.addEventListener("submit",function(e){e.preventDefault();var q=input.value.trim();if(!q)return;input.value="";reply(q)});'+
+   'entries.slice(0,4).forEach(function(e){var b=document.createElement("button");b.type="button";b.textContent=e.question;b.addEventListener("click",function(){reply(e.question)});suggest.appendChild(b)});'+
+   '})();';
+  page=page.slice(0,chatStart)+'<script>'+script+'</script>'+page.slice(chatEnd+9);
+ }
+
  const accent=colours[c.branding.colour]||colours.green;
  replace('</head>','<style>:root{--palette-087f78:'+accent+';--teal:'+accent+'} .yotion-draft-banner{position:relative;z-index:100;background:#152b36;color:white;text-align:center;padding:10px;font:600 13px system-ui}</style><meta name="robots" content="noindex,nofollow">'+(options.published?'<meta name="yotion-demo-ready" content="true">':'')+'</head>');
  return page;
