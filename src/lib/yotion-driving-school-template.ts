@@ -16,7 +16,7 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
  page=page.replace(/<section class="section" id="greenlight-privacy">[\s\S]*?<\/section>/,"");
  page=page.replace(/<a[^>]*href="#greenlight-privacy"[^>]*>[\s\S]*?<\/a>/g,"");
 
- const replace=(from:string,to:string)=>{page=page.replace(from,to)};
+ const replace=(from:string,to:string)=>{page=page.replace(from,()=>to)};
  replace("<title>Greenlight Driving | Automatic driving lessons in Liverpool</title>","<title>"+brand+" | Driving lessons</title>");
  replace('content="Friendly automatic driving lessons in Liverpool. Explore prices, areas and patient tuition, or ask the Greenlight assistant a quick question."','content="'+esc(c.hero.description)+'"');
  replace('Your road to<br><em>feeling confident.</em>',esc(c.hero.headline));
@@ -26,6 +26,12 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
  // Update prominent branding without replacing embedded scripts, data URLs or CSS.
  replace('Greenlight <span>Driving</span>',brand);
  replace('<strong>Greenlight Driving</strong>','<strong>'+brand+'</strong>');
+ replace('Meet Greenlight Driving<br><small>and Alex behind the wheel!</small>','Meet '+brand);
+ replace('© 2026 Greenlight Driving · Demonstration','© 2026 '+brand+' · Demonstration');
+ page=page.replaceAll('>Meet Alex</a>','>Meet your instructor</a>');
+ replace('AI-generated example of instructor Alex beside his teal learner car','Illustrative image of a driving instructor and learner car');
+ replace('Alex and his learner car · AI-generated example image','AI-generated example image');
+
 
  // Replace sample-only claims and content with the instructor's confirmed configuration.
  const replaceSection=(start:string,end:string,markup:string)=>{
