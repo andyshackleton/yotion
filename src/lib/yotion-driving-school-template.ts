@@ -78,12 +78,12 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
   updateSection("stories","questions",html=>{
    if(!c.reviews.items.length)return '';
    const cards=c.reviews.items.map(item=>{
-    const initials=item.attribution.trim().split(/\\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase();
+    const initials=item.attribution.trim().split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase();
     return '<article class="story-card"><blockquote>“'+esc(item.quote)+'”</blockquote><div class="story-person"><span class="story-initial" aria-hidden="true">'+esc(initials)+'</span><div><strong>'+esc(item.attribution)+'</strong></div></div></article>';
    }).join('');
    return html.replace('A little more confidence.<br>A lot more independence.',esc(c.reviews.heading))
-    .replace(/<div class="stories-notice">[\\s\\S]*?<\\/div>/,'')
-    .replace(/<div class="stories-grid">[\\s\\S]*?<\\/div><\\/div><\\/section>$/,
+    .replace(/<div class="stories-notice">[\s\S]*?<\/div>/,'')
+    .replace(/<div class="stories-grid">[\s\S]*?<\/div><\\/div><\\/section>$/,
       '<div class="stories-grid">'+cards+'</div></div></section>');
   });
  }
