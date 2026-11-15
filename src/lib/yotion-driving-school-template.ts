@@ -26,11 +26,15 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
  replace('AUTOMATIC DRIVING LESSONS IN LIVERPOOL',esc(c.hero.eyebrow));
  replace('Ask about your first lesson →',esc(c.hero.primaryCtaLabel)+' <span class="cta-arrow">→</span>');
  // Update prominent branding without replacing embedded scripts, data URLs or CSS.
- replace('Greenlight <span>Driving</span>',c.branding.schoolName.trim().toLowerCase()==='greenlight driving'?'Greenlight <span>Driving</span>':brand);
+ const nameParts=c.branding.schoolName.trim().split(/\\s+/);
+ const colouredName=nameParts.length>1
+  ? esc(nameParts.slice(0,-1).join(" "))+" <span>"+esc(nameParts[nameParts.length-1])+"</span>"
+  : brand;
+ replace('Greenlight <span>Driving</span>',colouredName);
  replace('<strong>Greenlight Driving</strong>','<strong>'+brand+'</strong>');
  replace('Meet Greenlight Driving<br><small>and Alex behind the wheel!</small>','Meet '+brand+'<br><small>and '+esc(c.instructor.name||'your instructor')+' behind the wheel!</small>');
  replace('© 2026 Greenlight Driving · Demonstration','© 2026 '+brand+' · Demonstration');
- page=page.replaceAll('>Meet Alex</a>','>Meet your instructor</a>');
+ page=page.replaceAll('>Meet Alex</a>','>Meet '+esc(c.instructor.name||'your instructor')+'</a>');
  replace('AI-generated example of instructor Alex beside his teal learner car','Illustrative image of a driving instructor and learner car');
  replace('Alex and his learner car · AI-generated example image','AI-generated example image');
 
