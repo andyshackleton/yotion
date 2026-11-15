@@ -34,7 +34,8 @@ export async function POST(request:NextRequest,context:{params:Promise<{id:strin
   let token="";
   const oldUrl=String(requestData.request.demo_url||"");
   if(existing.data&&oldUrl)token=parseDemoLink(oldUrl)?.token||"";
-  if(existing.data&&!token)return back(request,id,"missingtoken");
+  // A missing customer link must not prevent editing an existing draft.
+  // Generate a new private token and save it alongside the updated website.
   if(!token)token=randomBytes(24).toString("base64url");
   const hash=createHash("sha256").update(token).digest("hex");
   const upsert=await db().rpc("yotion_admin_upsert_website_demo",{p_request_id:id,p_slug:slug,p_school:school,p_theme:theme,p_headline:headline,p_intro:intro,p_lessons:lessons,p_areas:areas,p_email:String(requestData.request.email),p_access_hash:hash});
