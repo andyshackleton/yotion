@@ -1,3 +1,4 @@
+import {randomUUID} from "node:crypto";
 import {isSameOriginPost} from "../../../../../lib/yotion-admin-csrf";
 import {NextRequest,NextResponse} from "next/server";
 import {isAdmin} from "../../../../../lib/yotion-admin-auth";
@@ -45,10 +46,13 @@ export async function POST(request:NextRequest,context:{params:Promise<{id:strin
   const ids=f.getAll("knowledge_id").map(x=>String(x).trim());
   if(topics.length!==questions.length||questions.length!==answers.length||answers.length!==ids.length||topics.length>60)return back(request,id,"invalid");
   const knowledge=[];
+  const seenIds=new Set<string>();
   for(let i=0;i<topics.length;i++){
    if(!topics[i]&&!questions[i]&&!answers[i])continue;
    if(!topics[i]||!questions[i]||(f.has("knowledge_approved_"+i)&&!answers[i])||topics[i].length>100||questions[i].length>250||answers[i].length>1200)return back(request,id,"invalid");
-   knowledge.push({id:ids[i]||String(i+1),topic:topics[i],question:questions[i],answer:answers[i],approved:f.has("knowledge_approved_"+i)});
+   const id=ids[i]&&!seenIds.has(ids[i])?ids[i]:randomUUID();
+   seenIds.add(id);
+   knowledge.push({id,topic:topics[i],question:questions[i],answer:answers[i],approved:f.has("knowledge_approved_"+i)});
   }
   config.assistant.knowledge=knowledge;
   config.assistant.unansweredQuestions=[...new Set(lines(value(f,"assistant_gaps",6000)).slice(0,50).map(x=>x.slice(0,250)))];
