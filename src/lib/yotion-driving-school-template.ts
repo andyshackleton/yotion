@@ -75,7 +75,7 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
  updateSection("questions","enquire",html=>{
   const faqs=c.faq.items.map(item=>'<details><summary>'+esc(item.question)+'</summary><p>'+esc(item.answer)+'</p></details>').join('');
   return html.replace("It's okay to ask.",esc(c.faq.heading))
-   .replace(/<details>[\s\S]*?<\/details>(?=\s*<\/div>\s*<\/section>)/,faqs);
+   .replace(/(?:<details>[\s\S]*?<\/details>\s*)+(?=<\/div>\s*<\/section>)/,faqs);
  });
  updateSection("instructor","stories",html=>{
   // Keep the complete Sample layout, including its three-step journey.
