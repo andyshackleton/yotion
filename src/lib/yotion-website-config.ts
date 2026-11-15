@@ -8,7 +8,7 @@ export type WebsiteStatus = "draft"|"published";
 export interface WebsiteConfig {
  version: 1;
  branding: {schoolName:string;colour:BrandColour;logoUrl?:string;};
- hero: {eyebrow:string;headline:string;description:string;primaryCtaLabel:string;primaryCtaTarget:"#enquire";imageUrl?:string;};
+ hero: {eyebrow:string;headline:string;headlineAccent?:string;description:string;primaryCtaLabel:string;primaryCtaTarget:"#enquire";imageUrl?:string;};
  lessons: {heading:string;intro:string;items:Array<{id:string;title:string;description:string;price?:string}>;};
  instructor: {heading:string;name?:string;biography:string;photoUrl?:string;};
  teachingAreas: {heading:string;areas:string[];};
