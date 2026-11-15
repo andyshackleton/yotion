@@ -1,3 +1,4 @@
+import {websiteKnowledge,matchKnowledge} from "./yotion-chat-knowledge";
 import {applySharedWebsitePolish} from "./yotion-shared-website-polish";
 import type {WebsiteConfig} from "./yotion-website-config";
 import {greenlightOriginalHtml} from "./yotion-greenlight-original";
@@ -144,23 +145,18 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
  const chatStart=page.indexOf('<script>',page.indexOf('id="chat-dialog"'));
  const chatEnd=chatStart<0?-1:page.indexOf('</script>',chatStart);
  if(chatStart>=0&&chatEnd>chatStart){
-  const answers=[
-   ...(c.assistant.knowledge||[]).filter(x=>x.approved).map(x=>({question:x.question,answer:x.answer,href:''})),
-   ...c.faq.items.map(x=>({question:x.question,answer:x.answer,href:'#questions'})),
-   {question:"What lessons do you offer?",answer:c.lessons.items.map(x=>x.title+(x.price?' — '+x.price:'')+(x.description?'. '+x.description:'')).join(' ')||c.lessons.intro,href:'#lessons'},
-   {question:"Where do you teach?",answer:c.teachingAreas.areas.join(', ')||"Please contact the instructor to confirm teaching areas.",href:'#lessons'},
-   {question:"How do I enquire?",answer:"Use the contact form on this page. During this demonstration, it shows a confirmation rather than sending your details.",href:'#enquire'}
-  ];
+  const answers=websiteKnowledge(c);
   const script='(function(){'+
    'var d=document.getElementById("chat-dialog"),log=document.getElementById("chat-log"),suggest=document.getElementById("chat-suggestions"),form=document.getElementById("chat-form"),input=document.getElementById("chat-message");'+
    'if(!d||!log||!suggest||!form||!input)return;'+
+   'var matchKnowledge='+matchKnowledge.toString()+';'+
    'var entries='+JSON.stringify(answers).replace(/</g,"\\u003c")+';'+
    'function msg(value,who,href){var p=document.createElement("div");p.className="chat-message "+(who==="visitor"?"user":"bot");var t=document.createElement("p");t.textContent=value;p.appendChild(t);if(href){var actions=document.createElement("div");actions.className="chat-actions";var a=document.createElement("a");a.href=href;a.textContent="View on website →";a.addEventListener("click",function(){d.close()});actions.appendChild(a);p.appendChild(actions)}log.appendChild(p);log.scrollTop=log.scrollHeight;}'+
    'function reply(q){msg(q,"visitor");var clean=q.toLowerCase().trim().replace(/[’\u0027]/g,"").replace(/[^a-z0-9 ]/g," ").replace(/\\s+/g," ").trim();'+
    'if(/^(hi|hello|hey|hiya|good morning|good afternoon|good evening)$/.test(clean)){msg("Hello! How can I help you today? You can ask about lessons, prices, teaching areas or getting started.","bot");return;}'+
    'if(/^(thanks|thank you|cheers|great|okay|ok|thank you very much)$/.test(clean)){msg("You’re welcome! Is there anything else you would like to know about learning to drive?","bot");return;}'+
    'if(/^(bye|goodbye|see you|see you later)$/.test(clean)){msg("Goodbye! If you have more questions, you can come back any time.","bot");return;}'+
-   'var words=clean.split(/\\s+/).filter(function(w){return w.length>3});var ranked=entries.map(function(e){return {e:e,score:words.filter(function(w){return e.question.toLowerCase().includes(w)}).length}}).sort(function(a,b){return b.score-a.score});var hit=ranked.length&&ranked[0].score>0?ranked[0].e:null;msg(hit?hit.answer:'+JSON.stringify(c.assistant.fallbackMessage||"I don’t have a confirmed answer to that question. Please use the enquiry form to ask the instructor.").replace(/</g,"\\u003c")+',"bot",hit?hit.href:"#enquire");}'+
+   'var hit=matchKnowledge(q,entries).entry;msg(hit?hit.answer:'+JSON.stringify(c.assistant.fallbackMessage||"I don’t have a confirmed answer to that question. Please use the enquiry form to ask the instructor.").replace(/</g,"\\u003c")+',"bot",hit?hit.href:"#enquire");}'+
    'function open(){if(!d.open)d.show();if(!log.children.length)msg('+JSON.stringify(c.assistant.welcomeMessage||"Hi, I’m the website assistant. Ask me about lessons, teaching areas or getting started.").replace(/</g,"\\u003c")+',"bot");if(!window.matchMedia("(max-width:600px)").matches)input.focus();}'+
    'document.querySelectorAll("[data-open-chat]").forEach(function(b){b.addEventListener("click",open)});'+
    'var close=document.getElementById("chat-close");if(close)close.addEventListener("click",function(){d.close()});'+
