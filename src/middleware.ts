@@ -23,7 +23,7 @@ export function middleware(request:NextRequest){
  }
  if(host.endsWith(".yotion.co.uk") &&
   !["www.yotion.co.uk","sample.yotion.co.uk","demo.yotion.co.uk"].includes(host) &&
-  /^[a-z0-9-]+\\.yotion\\.co\\.uk$/.test(host)){
+  /^[a-z0-9-]+\.yotion\.co\.uk$/.test(host)){
   if(url.pathname==="/"){url.pathname="/website";return NextResponse.rewrite(url)}
   return new NextResponse("Not found",{status:404});
  }
