@@ -12,8 +12,9 @@ test("shared website has the Sample's required sections",async({page})=>{
  await expect(page.locator("#enquire")).toBeVisible();
 });
 
-test("chatbot greets visitors and preserves the conversation",async({page})=>{
+test("chatbot greets visitors and preserves the conversation",async({page,isMobile})=>{
  await page.goto("/");
+ if(isMobile)await page.locator(".site-menu-toggle").click();
  await page.locator(".nav-chat").first().click();
  await expect(page.locator("#chat-dialog")).toBeVisible();
  await page.locator("#chat-message").fill("hello");
