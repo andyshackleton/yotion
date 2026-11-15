@@ -1,5 +1,13 @@
 name: Website regression tests
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/lib/yotion-driving-school-template.ts'
+      - 'src/lib/yotion-website-config.ts'
+      - 'tests/e2e/**'
+      - 'playwright.config.ts'
+      - '.github/workflows/website-regression.yml'
   workflow_dispatch:
   schedule:
     - cron: "15 7 * * 1"
