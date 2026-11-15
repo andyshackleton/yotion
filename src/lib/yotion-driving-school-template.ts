@@ -24,8 +24,8 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
  const colouredHeadline=c.hero.headlineAccent?.trim();
  const plainHeadline=colouredHeadline
   ? esc(c.hero.headline)+'<br><em>'+esc(colouredHeadline)+'</em>'
-  : plainHeadline;
- replace('Your road to<br><em>feeling confident.</em>',heroParts?esc(heroParts[1])+'<br><em>'+esc(heroParts[2])+'</em>':esc(c.hero.headline));
+  : heroParts?esc(heroParts[1])+'<br><em>'+esc(heroParts[2])+'</em>':esc(c.hero.headline);
+ replace('Your road to<br><em>feeling confident.</em>',plainHeadline);
  replace('A calm start. A clear plan. Lessons that move at your pace.',esc(c.hero.description));
  replace('AUTOMATIC DRIVING LESSONS IN LIVERPOOL',esc(c.hero.eyebrow));
  replace('Ask about your first lesson →',esc(c.hero.primaryCtaLabel)+' <span class="cta-arrow">→</span>');
