@@ -22,14 +22,16 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
  replace('content="Friendly automatic driving lessons in Liverpool. Explore prices, areas and patient tuition, or ask the Greenlight assistant a quick question."','content="'+esc(c.hero.description)+'"');
  const heroParts=c.hero.headline.match(/^(Your road to)\s+(feeling confident\.?)$/i);
  const colouredHeadline=c.hero.headlineAccent?.trim();
+ const fallbackWords=c.hero.headline.trim().split(/\s+/);
+ const splitAt=Math.max(1,Math.ceil(fallbackWords.length/2));
  const plainHeadline=colouredHeadline
   ? esc(c.hero.headline)+'<br><em>'+esc(colouredHeadline)+'</em>'
-  : heroParts?esc(heroParts[1])+'<br><em>'+esc(heroParts[2])+'</em>':esc(c.hero.headline);
+  : heroParts?esc(heroParts[1])+'<br><em>'+esc(heroParts[2])+'</em>':fallbackWords.length>1?esc(fallbackWords.slice(0,splitAt).join(' '))+'<br><em>'+esc(fallbackWords.slice(splitAt).join(' '))+'</em>':esc(c.hero.headline);
  replace('Your road to<br><em>feeling confident.</em>',plainHeadline);
  replace('A calm start. A clear plan. Lessons that move at your pace.',esc(c.hero.description));
  replace('AUTOMATIC DRIVING LESSONS IN LIVERPOOL',esc(c.hero.eyebrow));
- replace('Ask about your first lesson →',esc(c.hero.primaryCtaLabel)+' <span class="cta-arrow">→</span>');
- replace('Ask about lessons →','Contact Us →');
+ replace('Ask about your first lesson →','Contact Us <span class="cta-arrow">→</span>');
+ replace('Ask about lessons →','Contact Us');
  replace('Ask a quick question ','Ask');
  replace('</head>','<style>.nav nav .nav-chat{background:var(--teal);color:#fff;border:1px solid var(--teal);border-radius:9px;padding:11px 17px;font-weight:700;cursor:pointer;transition:background .2s ease,transform .2s ease}.nav nav .nav-chat:hover{filter:brightness(.92);transform:translateY(-1px)}.nav nav .nav-cta{background:transparent;color:var(--teal);border:1px solid var(--teal);border-radius:9px;padding:11px 17px;transition:background .2s ease,color .2s ease}.nav nav .nav-cta:hover{background:var(--mint)}</style></head>');
  // Update prominent branding without replacing embedded scripts, data URLs or CSS.
@@ -137,6 +139,8 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
    '})();';
   page=page.slice(0,chatStart)+'<script>'+script+'</script>'+page.slice(chatEnd+9);
  }
+ // Apply button colours to the actual template classes, not a nonexistent nested nav.
+ replace('</head>','<style>.school-header .nav-chat,.school-header nav .nav-chat{background:var(--accent,var(--teal,#087f78))!important;color:#fff!important;border-color:var(--accent,var(--teal,#087f78))!important}.school-header .nav-cta,.school-header nav .nav-cta{color:var(--accent,var(--teal,#087f78))!important;background:transparent!important;border:1px solid currentColor!important}.school-header nav .nav-cta:hover{background:rgba(0,0,0,.05)!important}.sample-hero h1 em{color:var(--accent,var(--teal,#087f78))}</style></head>');
  page=applySharedWebsitePolish(page);
  replace('</head>','<style>#yotion-demo-enquiry :is(input,select,textarea){font-size:16px}</style><meta name="robots" content="noindex,nofollow">'+(options.published?'<meta name="yotion-demo-ready" content="true">':'')+'</head>');
 
