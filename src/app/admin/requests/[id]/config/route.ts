@@ -39,6 +39,16 @@ export async function POST(request:NextRequest,context:{params:Promise<{id:strin
   config.reviews.items=lines(value(f,"reviews",2500)).slice(0,12).map((line,i)=>{const [quote,attribution]=line.split("|").map(x=>x.trim());return{id:String(i+1),quote:(quote||"").slice(0,600),attribution:(attribution||"").slice(0,100)}});
   config.faq.heading=value(f,"faq_heading",100);
   config.faq.items=lines(value(f,"faq",3500)).slice(0,20).map((line,i)=>{const [question,answer]=line.split("|").map(x=>x.trim());return{id:String(i+1),question:(question||"").slice(0,250),answer:(answer||"").slice(0,700)}});
+  const knowledgeLines=lines(value(f,"assistant_knowledge",12000)).slice(0,60);
+  const knowledge=knowledgeLines.map((line,i)=>{
+   const parts=line.split("|").map(x=>x.trim());
+   if(parts.length!==4||!parts[0]||!parts[1]||!parts[2]||!["yes","no"].includes(parts[3].toLowerCase()))return null;
+   return {id:String(i+1),topic:parts[0].slice(0,100),question:parts[1].slice(0,250),answer:parts[2].slice(0,1200),approved:parts[3].toLowerCase()==="yes"};
+  });
+  if(knowledge.some(x=>x===null))return back(request,id,"invalid");
+  config.assistant.knowledge=knowledge.filter((x):x is NonNullable<typeof x>=>x!==null);
+  config.assistant.welcomeMessage=value(f,"assistant_welcome",300);
+  config.assistant.fallbackMessage=value(f,"assistant_fallback",500)||"I don’t have a confirmed answer to that question. Please use the enquiry form to ask the instructor.";
   config.contact.heading=value(f,"contact_heading",100);
   config.contact.description=value(f,"contact_intro",600);
   config.contact.email=value(f,"contact_email",250);
