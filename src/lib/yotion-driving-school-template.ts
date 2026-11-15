@@ -30,6 +30,7 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
  replace('AUTOMATIC DRIVING LESSONS IN LIVERPOOL',esc(c.hero.eyebrow));
  replace('Ask about your first lesson →',esc(c.hero.primaryCtaLabel)+' <span class="cta-arrow">→</span>');
  replace('Ask about lessons →','Contact Us →');
+ replace('Ask a quick question ','Ask');
  // Update prominent branding without replacing embedded scripts, data URLs or CSS.
  const nameParts=c.branding.schoolName.trim().split(/\s+/);
  const colouredName=nameParts.length>1
