@@ -21,10 +21,15 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
  replace("<title>Greenlight Driving | Automatic driving lessons in Liverpool</title>","<title>"+brand+" | Driving lessons</title>");
  replace('content="Friendly automatic driving lessons in Liverpool. Explore prices, areas and patient tuition, or ask the Greenlight assistant a quick question."','content="'+esc(c.hero.description)+'"');
  const heroParts=c.hero.headline.match(/^(Your road to)\s+(feeling confident\.?)$/i);
+ const colouredHeadline=c.hero.headlineAccent?.trim();
+ const plainHeadline=colouredHeadline
+  ? esc(c.hero.headline)+'<br><em>'+esc(colouredHeadline)+'</em>'
+  : plainHeadline;
  replace('Your road to<br><em>feeling confident.</em>',heroParts?esc(heroParts[1])+'<br><em>'+esc(heroParts[2])+'</em>':esc(c.hero.headline));
  replace('A calm start. A clear plan. Lessons that move at your pace.',esc(c.hero.description));
  replace('AUTOMATIC DRIVING LESSONS IN LIVERPOOL',esc(c.hero.eyebrow));
  replace('Ask about your first lesson →',esc(c.hero.primaryCtaLabel)+' <span class="cta-arrow">→</span>');
+ replace('Ask about lessons →','Contact Us →');
  // Update prominent branding without replacing embedded scripts, data URLs or CSS.
  const nameParts=c.branding.schoolName.trim().split(/\s+/);
  const colouredName=nameParts.length>1
@@ -34,7 +39,7 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
  replace('<strong>Greenlight Driving</strong>','<strong>'+brand+'</strong>');
  replace('Meet Greenlight Driving<br><small>and Alex behind the wheel!</small>','Meet '+brand+'<br><small>and '+esc(c.instructor.name||'your instructor')+' behind the wheel!</small>');
  replace('© 2026 Greenlight Driving · Demonstration','© 2026 '+brand+' · Demonstration');
- page=page.replaceAll('>Meet Alex</a>','>Meet '+esc(c.instructor.name||'your instructor')+'</a>');
+ page=page.replaceAll('>Meet Alex</a>','>About</a>');
  replace('AI-generated example of instructor Alex beside his teal learner car','Illustrative image of a driving instructor and learner car');
  replace('Alex and his learner car · AI-generated example image','AI-generated example image');
 
@@ -53,9 +58,10 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
  if(c.branding.schoolName.trim().toLowerCase()!=="greenlight driving"){
   updateSection("lessons","instructor",html=>{
    const cards=c.lessons.items.map(item=>'<article class="outcome"><h3>'+esc(item.title)+'</h3>'+(item.price?'<div class="sample-price">'+esc(item.price)+'</div>':'')+'<p class="sample-info">'+esc(item.description)+'</p></article>').join("");
+   const areaCard='<article class="outcome"><h3>'+esc(c.teachingAreas.heading)+'</h3><p class="sample-info">'+c.teachingAreas.areas.map(esc).join(' · ')+'</p></article>';
    return html.replace('Simple lessons. Clear prices.',esc(c.lessons.heading))
-    .replace(/<div class="outcome-grid">[\s\S]*?<\/div>/,
-     '<div class="outcome-grid">'+cards+'</div>');
+    .replace(/<div class="outcome-grid">[\s\S]*?<\/div><\/div><\/section>$/,
+      '<div class="outcome-grid">'+cards+areaCard+'</div></div></section>');
   });
   updateSection("questions","enquire",html=>{
    const faqs=c.faq.items.map(item=>'<details><summary>'+esc(item.question)+'</summary><p>'+esc(item.answer)+'</p></details>').join("");
