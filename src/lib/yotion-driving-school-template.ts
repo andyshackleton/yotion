@@ -62,16 +62,16 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
   const cards=c.lessons.items.map(item=>'<article class="outcome"><h3>'+esc(item.title)+'</h3>'+(item.price?'<div class="sample-price">'+esc(item.price)+'</div>':'')+'<p class="sample-info">'+esc(item.description)+'</p></article>').join('');
   const areaCard=c.teachingAreas.areas.length?'<article class="outcome"><h3>'+esc(c.teachingAreas.heading)+'</h3><p class="sample-info">'+c.teachingAreas.areas.map(esc).join(' · ')+'</p></article>':'';
   return html.replace('Simple lessons. Clear prices.',esc(c.lessons.heading))
-   .replace(/<div class="outcome-grid">[\\s\\S]*?<\\/div><\\/div><\\/section>$/,
+   .replace(/<div class="outcome-grid">[\s\S]*?<\/div><\/div><\/section>$/,
     '<div class="outcome-grid">'+cards+areaCard+'</div></div></section>');
  });
  updateSection("questions","enquire",html=>{
   const faqs=c.faq.items.map(item=>'<details><summary>'+esc(item.question)+'</summary><p>'+esc(item.answer)+'</p></details>').join('');
   return html.replace("It's okay to ask.",esc(c.faq.heading))
-   .replace(/<details>[\\s\\S]*?<\\/details>(?=\\s*<\\/div>\\s*<\\/section>)/,faqs);
+   .replace(/<details>[\s\S]*?<\/details>(?=\s*<\/div>\s*<\/section>)/,faqs);
  });
  updateSection("instructor","stories",html=>{
-  const portrait=c.instructor.photoUrl && /^https:\\/\\//i.test(c.instructor.photoUrl)
+  const portrait=c.instructor.photoUrl && /^https:\/\//i.test(c.instructor.photoUrl)
    ? '<figure class="instructor-portrait"><div class="face-circle"><img src="'+esc(c.instructor.photoUrl)+'" alt="'+esc(c.instructor.name||'Driving instructor')+'" loading="lazy"></div></figure>':'';
   const intro='<div class="instructor-intro">'+portrait+'<div><div class="eyebrow">YOUR INSTRUCTOR</div><h2>'+esc(c.instructor.heading)+'</h2>'+
    (c.instructor.name?'<h3>'+esc(c.instructor.name)+'</h3>':'')+'<p class="lead">'+esc(c.instructor.biography)+'</p></div></div>';
@@ -81,12 +81,12 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
  updateSection("stories","questions",html=>{
   if(!c.reviews.items.length)return '';
   const cards=c.reviews.items.map(item=>{
-   const initials=item.attribution.trim().split(/\\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase();
+   const initials=item.attribution.trim().split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase();
    return '<article class="story-card"><blockquote>“'+esc(item.quote)+'”</blockquote><div class="story-person"><span class="story-initial" aria-hidden="true">'+esc(initials)+'</span><div><strong>'+esc(item.attribution)+'</strong></div></div></article>';
   }).join('');
   return html.replace('A little more confidence.<br>A lot more independence.',esc(c.reviews.heading))
-   .replace(/<div class="stories-notice">[\\s\\S]*?<\\/div>/,'')
-   .replace(/<div class="stories-grid">[\\s\\S]*?<\\/div><\\/div><\\/section>$/,
+   .replace(/<div class="stories-notice">[\s\S]*?<\/div>/,'')
+   .replace(/<div class="stories-grid">[\s\S]*?<\/div><\/div><\/section>$/,
     '<div class="stories-grid">'+cards+'</div></div></section>');
  });
  // Keep the original enquiry form layout, but never send or store test details.
@@ -127,7 +127,7 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
    'if(!d||!log||!suggest||!form||!input)return;'+
    'var entries='+JSON.stringify(answers).replace(/</g,"\\u003c")+';'+
    'function msg(value,who,href){var p=document.createElement("div");p.className="chat-message "+(who==="visitor"?"user":"bot");var t=document.createElement("p");t.textContent=value;p.appendChild(t);if(href){var actions=document.createElement("div");actions.className="chat-actions";var a=document.createElement("a");a.href=href;a.textContent="View on website →";a.addEventListener("click",function(){d.close()});actions.appendChild(a);p.appendChild(actions)}log.appendChild(p);log.scrollTop=log.scrollHeight;}'+
-   'function reply(q){msg(q,"visitor");var words=q.toLowerCase().replace(/[^a-z0-9 ]/g," ").split(/\\s+/).filter(function(w){return w.length>3});var ranked=entries.map(function(e){return {e:e,score:words.filter(function(w){return e.question.toLowerCase().includes(w)}).length}}).sort(function(a,b){return b.score-a.score});var hit=ranked.length&&ranked[0].score>0?ranked[0].e:null;msg(hit?hit.answer:"I don’t have a confirmed answer to that question. Please use the enquiry form to ask the instructor.","bot",hit?hit.href:"#enquire");}'+
+   'function reply(q){msg(q,"visitor");var words=q.toLowerCase().replace(/[^a-z0-9 ]/g," ").split(/\s+/).filter(function(w){return w.length>3});var ranked=entries.map(function(e){return {e:e,score:words.filter(function(w){return e.question.toLowerCase().includes(w)}).length}}).sort(function(a,b){return b.score-a.score});var hit=ranked.length&&ranked[0].score>0?ranked[0].e:null;msg(hit?hit.answer:"I don’t have a confirmed answer to that question. Please use the enquiry form to ask the instructor.","bot",hit?hit.href:"#enquire");}'+
    'function open(){if(!d.open)d.show();if(!log.children.length)msg('+JSON.stringify(c.assistant.welcomeMessage||"Hi, I’m the website assistant. Ask me about lessons, teaching areas or getting started.").replace(/</g,"\\u003c")+',"bot");if(!window.matchMedia("(max-width:600px)").matches)input.focus();}'+
    'document.querySelectorAll("[data-open-chat]").forEach(function(b){b.addEventListener("click",open)});'+
    'var close=document.getElementById("chat-close");if(close)close.addEventListener("click",function(){d.close()});'+
