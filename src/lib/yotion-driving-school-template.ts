@@ -75,9 +75,10 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
  updateSection("instructor","stories",html=>{
   const portrait=c.instructor.photoUrl && /^https:\/\//i.test(c.instructor.photoUrl)
    ? '<figure class="instructor-portrait"><div class="face-circle"><img src="'+esc(c.instructor.photoUrl)+'" alt="'+esc(c.instructor.name||'Driving instructor')+'" loading="lazy"></div></figure>':'';
-  const intro='<div class="instructor-intro">'+portrait+'<div><div class="eyebrow">YOUR INSTRUCTOR</div><h2>'+esc(c.instructor.heading)+'</h2>'+
+  const portraitOrPlaceholder=portrait||'<figure class="instructor-portrait"><div class="face-circle" aria-label="Instructor photograph not yet supplied"><span class="instructor-placeholder">'+esc((c.instructor.name||c.branding.schoolName).trim().charAt(0).toLowerCase())+'</span></div></figure>';
+  const intro='<div class="instructor-intro">'+portraitOrPlaceholder+'<div class="instructor-copy"><div class="eyebrow">YOUR INSTRUCTOR</div><h2>'+esc(c.instructor.heading)+'</h2>'+
    (c.instructor.name?'<h3>'+esc(c.instructor.name)+'</h3>':'')+'<p class="lead">'+esc(c.instructor.biography)+'</p></div></div>';
-  const coverage='<div class="outcome"><h3>'+esc(c.teachingAreas.heading)+'</h3><p>'+c.teachingAreas.areas.map(esc).join(' · ')+'</p></div>';
+  const coverage='';
   return '<section class="section soft" id="instructor"><div class="wrap example-grid"><div>'+intro+'</div><div>'+coverage+'</div></div></section>';
  });
  updateSection("stories","questions",html=>{
@@ -142,6 +143,7 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
  // Apply button colours to the actual template classes, not a nonexistent nested nav.
  replace('</head>','<style>.nav nav .nav-chat{background:var(--accent,var(--teal,#087f78))!important;color:#fff!important;border-color:var(--accent,var(--teal,#087f78))!important}.nav nav .nav-cta{color:var(--accent,var(--teal,#087f78))!important;background:transparent!important;border:1px solid currentColor!important}.nav nav .nav-cta:hover{background:rgba(0,0,0,.05)!important}.sample-hero h1 em{color:var(--accent,var(--teal,#087f78))}</style></head>');
  replace('</head>','<style>@media(max-width:950px){.nav .wrap{flex-wrap:wrap!important;gap:10px}.nav nav{display:flex!important;width:100%;overflow-x:auto;white-space:nowrap;gap:8px;padding:0 0 10px;scrollbar-width:thin}.nav nav .nav-pill{display:inline-flex!important;flex-shrink:0}.nav nav .nav-chat,.nav nav .nav-cta{display:inline-flex!important;flex-shrink:0}}@media(max-width:520px){.nav nav{gap:6px}.nav nav .nav-pill{padding:9px 10px}}</style></head>');
+ replace('</head>','<style>.instructor-placeholder{display:grid;place-items:center;width:160px;height:220px;border-radius:75px 75px 13px 13px;background:var(--mint);color:var(--teal);font:700 80px Georgia,serif}.instructor-copy{min-width:0}</style></head>');
  page=applySharedWebsitePolish(page);
  replace('</head>','<style>#yotion-demo-enquiry :is(input,select,textarea){font-size:16px}</style><meta name="robots" content="noindex,nofollow">'+(options.published?'<meta name="yotion-demo-ready" content="true">':'')+'</head>');
 
