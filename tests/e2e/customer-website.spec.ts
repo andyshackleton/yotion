@@ -5,9 +5,14 @@ test("shared website has the Sample's required sections",async({page})=>{
  await expect(page.locator("#lessons")).toBeVisible();
  await expect(page.locator("#lessons h2")).toHaveText("Simple lessons. Clear prices.");
  await expect(page.locator("#lessons .outcome")).toHaveCount(3);
+ await expect(page.locator("#lessons .outcome").nth(1)).toContainText("Where we teach");
+ await expect(page.locator("#lessons .outcome").nth(2)).toContainText("When we teach");
  await expect(page.locator("#instructor")).toBeVisible();
  await expect(page.locator("#instructor .instructor-portrait")).toBeVisible();
  await expect(page.locator("#instructor .journey-stage")).toHaveCount(3);
+ await expect(page.locator("#stories")).toBeVisible();
+ await expect(page.locator("#stories .stories-heading")).toBeVisible();
+ await expect(page.locator("#stories .stories-grid")).toBeVisible();
  await expect(page.locator("#questions")).toBeVisible();
  await expect(page.locator("#enquire")).toBeVisible();
 });
