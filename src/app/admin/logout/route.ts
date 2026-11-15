@@ -4,9 +4,18 @@ import {adminBaseUrl} from "../../../lib/yotion-admin-url";
 export async function POST(request:NextRequest){
  const canonical=adminBaseUrl();
  const origin=request.headers.get("origin");
- // Vercel may expose an internal deployment URL to the route even when the
- // browser posts from the configured public admin domain.
- if(origin&&origin!==canonical.origin&&origin!==new URL(request.url).origin){
+ const fetchSite=request.headers.get("sec-fetch-site");
+ // Compare browser origins against the public hostname, not the internal
+ // deployment URL used by Vercel's reverse proxy.
+ if(origin){
+  let source:URL;
+  try{source=new URL(origin)}catch{return new NextResponse("Forbidden",{status:403})}
+  const allowedHosts=new Set([canonical.hostname,"yotion.co.uk","www.yotion.co.uk"]);
+  if(source.protocol!=="https:"||!allowedHosts.has(source.hostname)||source.port){
+   console.warn("Yotion logout rejected unexpected origin host",source.hostname);
+   return new NextResponse("Forbidden",{status:403});
+  }
+ }else if(fetchSite&&fetchSite!=="same-origin"&&fetchSite!=="same-site"){
   return new NextResponse("Forbidden",{status:403});
  }
  const response=NextResponse.redirect(new URL("/admin/login",canonical),303);
