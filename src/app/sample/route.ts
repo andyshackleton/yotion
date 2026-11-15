@@ -1,3 +1,4 @@
+import {applySharedWebsitePolish} from "../../lib/yotion-shared-website-polish";
 import {greenlightOriginalHtml as html} from "../../lib/yotion-greenlight-original";
 // Preserved original Greenlight Driving example template (including theme picker).
 // This is a standalone preview until the tenant template is componentised.
@@ -14,7 +15,7 @@ export function GET(request:NextRequest) {
  const host=(request.headers.get("host")||"").split(":")[0].toLowerCase();
  if(host==="sample.yotion.co.uk"){
   // The showcase subdomain is a standalone example, not the Yotion preview frame.
-  const standalone=html.replace(/<aside class="yotion-example-cta"[^>]*>[\s\S]*?<\/aside>/,"");
+  const standalone=applySharedWebsitePolish(html).replace(/<aside class="yotion-example-cta"[^>]*>[\s\S]*?<\/aside>/,"");
   return new Response(standalone,{headers:{"Content-Type":"text/html; charset=utf-8","X-Content-Type-Options":"nosniff","X-Robots-Tag":"noindex, nofollow","Cache-Control":"no-store"}});
  }
  const embedded=new URL(request.url).searchParams.get("embedded")==="1";
