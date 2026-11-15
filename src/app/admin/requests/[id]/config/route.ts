@@ -34,6 +34,7 @@ export async function POST(request:NextRequest,context:{params:Promise<{id:strin
   config.instructor.photoUrl=photoUrl||undefined;
   config.teachingAreas.heading=value(f,"areas_heading",100);
   config.teachingAreas.areas=lines(value(f,"areas",1200)).slice(0,40);
+  config.teachingAreas.schedule=value(f,"teaching_schedule",600);
   config.reviews.heading=value(f,"reviews_heading",100);
   config.reviews.items=lines(value(f,"reviews",2500)).slice(0,12).map((line,i)=>{const [quote,attribution]=line.split("|").map(x=>x.trim());return{id:String(i+1),quote:(quote||"").slice(0,600),attribution:(attribution||"").slice(0,100)}});
   config.faq.heading=value(f,"faq_heading",100);
