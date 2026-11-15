@@ -15,7 +15,7 @@ export async function GET(request:NextRequest,context:{params:Promise<{id:string
  const events=(req.data?.events||[]) as Array<Record<string,unknown>>;
  const school=String(demo.data?.school_name||record.school||"Customer"),base="/admin/requests/"+id;
  const cfg=isWebsiteConfig(demo.data?.config)?demo.data.config:null;
- const knowledge=cfg?.assistant.knowledge||[];
+ const knowledge: Array<{approved:boolean}>=cfg?.assistant.knowledge||[];
  const tasks=[
   {name:"School identity and branding",detail:"Name, website slug and brand colour",href:base,ready:!!demo.data},
   {name:"Website content",detail:"Lessons, instructor, teaching areas and contact",href:base+"#website-sections",ready:!!cfg},
