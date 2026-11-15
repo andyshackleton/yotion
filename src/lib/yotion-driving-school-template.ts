@@ -19,14 +19,15 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
  const replace=(from:string,to:string)=>{page=page.replace(from,()=>to)};
  replace("<title>Greenlight Driving | Automatic driving lessons in Liverpool</title>","<title>"+brand+" | Driving lessons</title>");
  replace('content="Friendly automatic driving lessons in Liverpool. Explore prices, areas and patient tuition, or ask the Greenlight assistant a quick question."','content="'+esc(c.hero.description)+'"');
- replace('Your road to<br><em>feeling confident.</em>',esc(c.hero.headline));
+ const heroParts=c.hero.headline.match(/^(Your road to)\\s+(feeling confident\\.?)$/i);
+ replace('Your road to<br><em>feeling confident.</em>',heroParts?esc(heroParts[1])+'<br><em>'+esc(heroParts[2])+'</em>':esc(c.hero.headline));
  replace('A calm start. A clear plan. Lessons that move at your pace.',esc(c.hero.description));
  replace('AUTOMATIC DRIVING LESSONS IN LIVERPOOL',esc(c.hero.eyebrow));
- replace('Ask about your first lesson →',esc(c.hero.primaryCtaLabel));
+ replace('Ask about your first lesson →',esc(c.hero.primaryCtaLabel)+' <span class="cta-arrow">→</span>');
  // Update prominent branding without replacing embedded scripts, data URLs or CSS.
  replace('Greenlight <span>Driving</span>',brand);
  replace('<strong>Greenlight Driving</strong>','<strong>'+brand+'</strong>');
- replace('Meet Greenlight Driving<br><small>and Alex behind the wheel!</small>','Meet '+brand);
+ replace('Meet Greenlight Driving<br><small>and Alex behind the wheel!</small>','Meet '+brand+'<br><small>and '+esc(c.instructor.name||'your instructor')+' behind the wheel!</small>');
  replace('© 2026 Greenlight Driving · Demonstration','© 2026 '+brand+' · Demonstration');
  page=page.replaceAll('>Meet Alex</a>','>Meet your instructor</a>');
  replace('AI-generated example of instructor Alex beside his teal learner car','Illustrative image of a driving instructor and learner car');
@@ -77,7 +78,8 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
  const initial=Array.from(c.branding.schoolName.trim())[0]?.toLocaleLowerCase("en-GB")||"d";
  page=page.replace(/(<span class="school-icon" aria-hidden="true">)[^<]*(<\/span>)/,(_,open,close)=>open+esc(initial)+close);
  page=page.replace(/(<span class="chat-avatar" aria-hidden="true">)[^<]*(<\/span>)/,(_,open,close)=>open+esc(initial)+close);
- page=page.replace(/Ask Greenlight/g,()=> 'Ask '+brand);
+ const shortBrand=esc(c.branding.schoolName.trim().split(/\\s+/)[0]||c.branding.schoolName);
+ page=page.replace(/Ask Greenlight/g,()=> 'Ask '+shortBrand);
  const icon='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="16" fill="#172e2b"/><text x="32" y="46" text-anchor="middle" font-family="Arial,sans-serif" font-weight="bold" font-size="42" fill="white">'+esc(initial)+'</text></svg>';
  page=page.replace(/<link rel="icon"[^>]*>/,
   '<link rel="icon" href="data:image/svg+xml,'+encodeURIComponent(icon)+'">');
