@@ -39,6 +39,10 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
   const a=page.indexOf(start),b=a<0?-1:page.indexOf(end,a+start.length);
   if(a>=0&&b>a)page=page.slice(0,a)+markup+page.slice(b);
  };
+ // The internal Greenlight showcase is the visual parity baseline. Retain all
+ // original sections and their ordering while the generic section bindings
+ // are being migrated. Other tenants continue to use configured content.
+ if(c.branding.schoolName.trim().toLowerCase()!=="greenlight driving"){
  const wrap=(id:string,heading:string,body:string,soft=false)=>
   '<section class="section'+(soft?' soft':'')+'" id="'+id+'"><div class="wrap"><h2>'+esc(heading)+'</h2>'+body+'</div></section>';
  const lessonCards=c.lessons.items.map(x=>'<article class="outcome"><h3>'+esc(x.title)+'</h3>'+(x.price?'<div class="sample-price">'+esc(x.price)+'</div>':'')+'<p class="sample-info">'+esc(x.description)+'</p></article>').join("");
@@ -53,6 +57,7 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
  const faqItems=c.faq.items.map(x=>'<details><summary>'+esc(x.question)+'</summary><p>'+esc(x.answer)+'</p></details>').join("");
  replaceSection('<section class="section" id="questions">','<section class="section soft" id="enquire">',
   c.faq.items.length?wrap('questions',c.faq.heading,faqItems):'');
+ }
  // Keep the original enquiry form layout, but never send or store test details.
  // The browser explicitly confirms what would happen after production activation.
  const form='<form class="form-card" id="yotion-demo-enquiry">'+
