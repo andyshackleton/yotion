@@ -54,13 +54,13 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
   updateSection("lessons","instructor",html=>{
    const cards=c.lessons.items.map(item=>'<article class="outcome"><h3>'+esc(item.title)+'</h3>'+(item.price?'<div class="sample-price">'+esc(item.price)+'</div>':'')+'<p class="sample-info">'+esc(item.description)+'</p></article>').join("");
    return html.replace('Simple lessons. Clear prices.',esc(c.lessons.heading))
-    .replace(/<div class="outcome-grid">[\\s\\S]*?<\\/div>/,
+    .replace(/<div class="outcome-grid">[\s\S]*?<\/div>/,
      '<div class="outcome-grid">'+cards+'</div>');
   });
   updateSection("questions","enquire",html=>{
    const faqs=c.faq.items.map(item=>'<details><summary>'+esc(item.question)+'</summary><p>'+esc(item.answer)+'</p></details>').join("");
    return html.replace("It's okay to ask.",esc(c.faq.heading))
-    .replace(/<details>[\\s\\S]*?<\\/details>(?=\\s*<\\/div>\\s*<\\/section>)/,faqs);
+    .replace(/<details>[\s\S]*?<\/details>(?=\s*<\/div>\s*<\/section>)/,faqs);
   });
   // Instructor and testimonial layouts require dedicated bindings for
   // imagery and verification; do not publish fictional Greenlight reviews.
