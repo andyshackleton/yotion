@@ -76,8 +76,11 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
   // Keep the complete Sample layout, including its three-step journey.
   const heading=esc(c.instructor.name?'Hello, I\'m '+c.instructor.name+'.':c.instructor.heading);
   let result=html.replace("Hello, I'm Alex.",heading);
+  const note=c.instructor.profileNote?.trim()
+   ? '<p class="sample-profile"><strong>'+esc(c.instructor.profileNoteHeading?.trim()||'About my experience')+'</strong><br>'+esc(c.instructor.profileNote)+'</p>'
+   : '<p class="sample-profile"><strong>Instructor details coming soon</strong><br>Experience and qualifications will be added when confirmed by the instructor.</p>';
   result=result.replace(/<div class="instructor-copy">[\s\S]*?<\/div><\/div><\/div><div class="journey">/,
-   '<div class="instructor-copy"><div class="eyebrow">MEET YOUR INSTRUCTOR</div><h2>'+heading+'</h2><p>'+esc(c.instructor.biography)+'</p></div></div></div><div class="journey">');
+   '<div class="instructor-copy"><div class="eyebrow">MEET YOUR INSTRUCTOR</div><h2>'+heading+'</h2><p>'+esc(c.instructor.biography)+'</p>'+note+'</div></div></div><div class="journey">');
   // Keep the Sample's existing illustration until a website-specific photo is supplied.
   // Never replace the photo component with a lettermark.
   if(c.instructor.photoUrl&&/^https:\/\//i.test(c.instructor.photoUrl)){
