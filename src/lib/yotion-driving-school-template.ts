@@ -62,19 +62,30 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
    return html.replace("It's okay to ask.",esc(c.faq.heading))
     .replace(/<details>[\s\S]*?<\/details>(?=\s*<\/div>\s*<\/section>)/,faqs);
   });
-  // Instructor and testimonial layouts require dedicated bindings for
-  // imagery and verification; do not publish fictional Greenlight reviews.
-  const wrap=(id:string,heading:string,body:string,soft=false)=>
-   '<section class="section'+(soft?' soft':'')+'" id="'+id+'"><div class="wrap"><h2>'+esc(heading)+'</h2>'+body+'</div></section>';
-  const replaceSection=(start:string,end:string,markup:string)=>{
-   const from=page.indexOf(start),to=from<0?-1:page.indexOf(end,from+start.length);
-   if(from>=0&&to>from)page=page.slice(0,from)+markup+page.slice(to);
-  };
-  replaceSection('<section class="section soft" id="instructor">','<section class="section learner-stories" id="stories"',
-   wrap('instructor',c.instructor.heading,'<p class="lead">'+esc(c.instructor.biography)+'</p><h3>'+esc(c.teachingAreas.heading)+'</h3><p>'+c.teachingAreas.areas.map(esc).join(' · ')+'</p>',true));
-  const reviews=c.reviews.items.map(item=>'<article class="story-card"><blockquote>'+esc(item.quote)+'</blockquote><p>'+esc(item.attribution)+'</p></article>').join("");
-  replaceSection('<section class="section learner-stories" id="stories"','<section class="section" id="questions">',
-   reviews?wrap('stories',c.reviews.heading,'<div class="stories-grid">'+reviews+'</div>'):'');
+  // Render customer-specific instructor details in the existing visual grid.
+  // Never reuse Greenlight's fictional instructor photographs for customers.
+  const portrait=c.instructor.photoUrl && /^https:\/\//i.test(c.instructor.photoUrl)
+   ? '<figure class="instructor-portrait"><div class="face-circle"><img src="'+esc(c.instructor.photoUrl)+'" alt="'+esc(c.instructor.name||'Driving instructor')+'" loading="lazy"></div></figure>'
+   : '';
+  updateSection("instructor","stories",html=>{
+   const intro='<div class="instructor-intro">'+portrait+'<div><div class="eyebrow">YOUR INSTRUCTOR</div><h2>'+esc(c.instructor.heading)+'</h2>'+
+    (c.instructor.name?'<h3>'+esc(c.instructor.name)+'</h3>':'')+
+    '<p class="lead">'+esc(c.instructor.biography)+'</p></div></div>';
+   const coverage='<div class="outcome"><h3>'+esc(c.teachingAreas.heading)+'</h3><p>'+c.teachingAreas.areas.map(esc).join(' · ')+'</p></div>';
+   return '<section class="section soft" id="instructor"><div class="wrap example-grid"><div>'+intro+'</div><div>'+coverage+'</div></div></section>';
+  });
+  // Only show testimonials actually supplied for this customer.
+  updateSection("stories","questions",html=>{
+   if(!c.reviews.items.length)return '';
+   const cards=c.reviews.items.map(item=>{
+    const initials=item.attribution.trim().split(/\\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase();
+    return '<article class="story-card"><blockquote>“'+esc(item.quote)+'”</blockquote><div class="story-person"><span class="story-initial" aria-hidden="true">'+esc(initials)+'</span><div><strong>'+esc(item.attribution)+'</strong></div></div></article>';
+   }).join('');
+   return html.replace('A little more confidence.<br>A lot more independence.',esc(c.reviews.heading))
+    .replace(/<div class="stories-notice">[\\s\\S]*?<\\/div>/,'')
+    .replace(/<div class="stories-grid">[\\s\\S]*?<\\/div><\\/div><\\/section>$/,
+      '<div class="stories-grid">'+cards+'</div></div></section>');
+  });
  }
  // Keep the original enquiry form layout, but never send or store test details.
  // The browser explicitly confirms what would happen after production activation.
