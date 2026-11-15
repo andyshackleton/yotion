@@ -73,13 +73,19 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
    .replace(/<details>[\s\S]*?<\/details>(?=\s*<\/div>\s*<\/section>)/,faqs);
  });
  updateSection("instructor","stories",html=>{
-  const portrait=c.instructor.photoUrl && /^https:\/\//i.test(c.instructor.photoUrl)
-   ? '<figure class="instructor-portrait"><div class="face-circle"><img src="'+esc(c.instructor.photoUrl)+'" alt="'+esc(c.instructor.name||'Driving instructor')+'" loading="lazy"></div></figure>':'';
-  const portraitOrPlaceholder=portrait||'<figure class="instructor-portrait"><div class="face-circle" aria-label="Instructor photograph not yet supplied"><span class="instructor-placeholder">'+esc((c.instructor.name||c.branding.schoolName).trim().charAt(0).toLowerCase())+'</span></div></figure>';
-  const intro='<div class="instructor-intro">'+portraitOrPlaceholder+'<div class="instructor-copy"><div class="eyebrow">YOUR INSTRUCTOR</div><h2>'+esc(c.instructor.heading)+'</h2>'+
-   (c.instructor.name?'<h3>'+esc(c.instructor.name)+'</h3>':'')+'<p class="lead">'+esc(c.instructor.biography)+'</p></div></div>';
-  const coverage='';
-  return '<section class="section soft" id="instructor"><div class="wrap example-grid"><div>'+intro+'</div><div>'+coverage+'</div></div></section>';
+  // Keep the complete Sample layout, including its three-step journey.
+  const heading=esc(c.instructor.name?'Hello, I\'m '+c.instructor.name+'.':c.instructor.heading);
+  let result=html.replace("Hello, I'm Alex.",heading);
+  result=result.replace(/<div class="instructor-copy">[\s\S]*?<\/div><\/div><\/div><div class="journey">/,
+   '<div class="instructor-copy"><div class="eyebrow">MEET YOUR INSTRUCTOR</div><h2>'+heading+'</h2><p>'+esc(c.instructor.biography)+'</p></div></div></div><div class="journey">');
+  if(c.instructor.photoUrl&&/^https:\/\//i.test(c.instructor.photoUrl)){
+   result=result.replace(/(<figure class="instructor-portrait">[\s\S]*?<img src=")[^"]+("[^>]*>)/,
+    (_,before,after)=>before+esc(c.instructor.photoUrl)+after);
+  }else{
+   result=result.replace(/<figure class="instructor-portrait">[\s\S]*?<\/figure>/,
+    '<figure class="instructor-portrait"><div class="face-circle"><span class="instructor-placeholder" aria-label="Instructor photo pending">'+esc((c.instructor.name||c.branding.schoolName).charAt(0).toLowerCase())+'</span></div></figure>');
+  }
+  return result;
  });
  updateSection("stories","questions",html=>{
   if(!c.reviews.items.length)return '';
