@@ -27,6 +27,8 @@ export async function POST(request:NextRequest,context:{params:Promise<{id:strin
   config.lessons.items=lines(value(f,"lessons",3500)).slice(0,15).map((line,i)=>{const [title,price,description]=line.split("|").map(x=>x.trim());return{id:String(i+1),title:(title||"Lesson").slice(0,100),price:(price||"").slice(0,50),description:(description||"").slice(0,500)}});
   config.instructor.heading=value(f,"instructor_heading",100);
   config.instructor.biography=value(f,"biography",1800);
+  config.instructor.profileNoteHeading=value(f,"profile_note_heading",120);
+  config.instructor.profileNote=value(f,"profile_note",1200);
   const photoUrl=value(f,"instructor_photo_url",1500);
   if(photoUrl&&!/^https:\/\/[^\s]+$/i.test(photoUrl))return back(request,id,"invalid");
   config.instructor.photoUrl=photoUrl||undefined;
