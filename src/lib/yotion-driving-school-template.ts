@@ -145,6 +145,7 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
  const chatEnd=chatStart<0?-1:page.indexOf('</script>',chatStart);
  if(chatStart>=0&&chatEnd>chatStart){
   const answers=[
+   ...(c.assistant.knowledge||[]).filter(x=>x.approved).map(x=>({question:x.question,answer:x.answer,href:''})),
    ...c.faq.items.map(x=>({question:x.question,answer:x.answer,href:'#questions'})),
    {question:"What lessons do you offer?",answer:c.lessons.items.map(x=>x.title+(x.price?' — '+x.price:'')+(x.description?'. '+x.description:'')).join(' ')||c.lessons.intro,href:'#lessons'},
    {question:"Where do you teach?",answer:c.teachingAreas.areas.join(', ')||"Please contact the instructor to confirm teaching areas.",href:'#lessons'},
@@ -159,7 +160,7 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
    'if(/^(hi|hello|hey|hiya|good morning|good afternoon|good evening)$/.test(clean)){msg("Hello! How can I help you today? You can ask about lessons, prices, teaching areas or getting started.","bot");return;}'+
    'if(/^(thanks|thank you|cheers|great|okay|ok|thank you very much)$/.test(clean)){msg("You’re welcome! Is there anything else you would like to know about learning to drive?","bot");return;}'+
    'if(/^(bye|goodbye|see you|see you later)$/.test(clean)){msg("Goodbye! If you have more questions, you can come back any time.","bot");return;}'+
-   'var words=clean.split(/\\s+/).filter(function(w){return w.length>3});var ranked=entries.map(function(e){return {e:e,score:words.filter(function(w){return e.question.toLowerCase().includes(w)}).length}}).sort(function(a,b){return b.score-a.score});var hit=ranked.length&&ranked[0].score>0?ranked[0].e:null;msg(hit?hit.answer:"I don’t have a confirmed answer to that question. Please use the enquiry form to ask the instructor.","bot",hit?hit.href:"#enquire");}'+
+   'var words=clean.split(/\\s+/).filter(function(w){return w.length>3});var ranked=entries.map(function(e){return {e:e,score:words.filter(function(w){return e.question.toLowerCase().includes(w)}).length}}).sort(function(a,b){return b.score-a.score});var hit=ranked.length&&ranked[0].score>0?ranked[0].e:null;msg(hit?hit.answer:'+JSON.stringify(c.assistant.fallbackMessage||"I don’t have a confirmed answer to that question. Please use the enquiry form to ask the instructor.").replace(/</g,"\\u003c")+',"bot",hit?hit.href:"#enquire");}'+
    'function open(){if(!d.open)d.show();if(!log.children.length)msg('+JSON.stringify(c.assistant.welcomeMessage||"Hi, I’m the website assistant. Ask me about lessons, teaching areas or getting started.").replace(/</g,"\\u003c")+',"bot");if(!window.matchMedia("(max-width:600px)").matches)input.focus();}'+
    'document.querySelectorAll("[data-open-chat]").forEach(function(b){b.addEventListener("click",open)});'+
    'var close=document.getElementById("chat-close");if(close)close.addEventListener("click",function(){d.close()});'+
