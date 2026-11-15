@@ -11,7 +11,7 @@ export interface WebsiteConfig {
  hero: {eyebrow:string;headline:string;headlineAccent?:string;description:string;primaryCtaLabel:string;primaryCtaTarget:"#enquire";imageUrl?:string;};
  lessons: {heading:string;intro:string;items:Array<{id:string;title:string;description:string;price?:string}>;};
  instructor: {heading:string;name?:string;biography:string;photoUrl?:string;profileNoteHeading?:string;profileNote?:string;};
- teachingAreas: {heading:string;areas:string[];};
+ teachingAreas: {heading:string;areas:string[];schedule?:string;};
  reviews: {heading:string;items:Array<{id:string;quote:string;attribution:string}>;};
  faq: {heading:string;items:Array<{id:string;question:string;answer:string}>;};
  contact: {heading:string;description:string;email:string;phone?:string;whatsapp?:string;};
