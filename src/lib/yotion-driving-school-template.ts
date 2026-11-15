@@ -136,9 +136,9 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
    'var d=document.getElementById("chat-dialog"),log=document.getElementById("chat-log"),suggest=document.getElementById("chat-suggestions"),form=document.getElementById("chat-form"),input=document.getElementById("chat-message");'+
    'if(!d||!log||!suggest||!form||!input)return;'+
    'var entries='+JSON.stringify(answers).replace(/</g,"\\u003c")+';'+
-   'function msg(value,who){var p=document.createElement("p");p.className=who==="visitor"?"chat-user-message":"chat-assistant-message";p.textContent=value;log.appendChild(p);log.scrollTop=log.scrollHeight;}'+
+   'function msg(value,who){var p=document.createElement("p");p.className=who==="visitor"?"chat-message user":"chat-message bot";p.textContent=value;log.appendChild(p);log.scrollTop=log.scrollHeight;}'+
    'function reply(q){msg(q,"visitor");var clean=q.toLowerCase().replace(/[^a-z0-9 ]/g," ").trim();var words=clean.split(/\\s+/).filter(function(w){return w.length>3});var ranked=entries.map(function(e){var title=e.question.toLowerCase();var score=words.filter(function(w){return title.includes(w)}).length;return {e:e,score:score}}).sort(function(a,b){return b.score-a.score});msg(ranked.length&&ranked[0].score>0?ranked[0].e.answer:"I don’t have a confirmed answer to that question. Please use the enquiry form to ask the instructor.");}'+
-   'function open(){if(!d.open)d.showModal();if(!log.children.length)msg('+JSON.stringify(c.assistant.welcomeMessage||"Hello! Ask me about lessons, teaching areas or how to enquire.").replace(/</g,"\\u003c")+');input.focus();}'+
+   'function open(){if(!d.open)d.show();if(!log.children.length)msg('+JSON.stringify(c.assistant.welcomeMessage||"Hi, I’m the website assistant. Ask me about lessons, teaching areas or getting started. I use the information on this site and can’t check live slots or book lessons.").replace(/</g,"\\u003c")+');input.focus();}'+
    'document.querySelectorAll("[data-open-chat]").forEach(function(b){b.addEventListener("click",open)});'+
    'var close=document.getElementById("chat-close");if(close)close.addEventListener("click",function(){d.close()});'+
    'form.addEventListener("submit",function(e){e.preventDefault();var q=input.value.trim();if(!q)return;input.value="";reply(q)});'+
