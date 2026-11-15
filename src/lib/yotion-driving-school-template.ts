@@ -19,13 +19,13 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
  const replace=(from:string,to:string)=>{page=page.replace(from,()=>to)};
  replace("<title>Greenlight Driving | Automatic driving lessons in Liverpool</title>","<title>"+brand+" | Driving lessons</title>");
  replace('content="Friendly automatic driving lessons in Liverpool. Explore prices, areas and patient tuition, or ask the Greenlight assistant a quick question."','content="'+esc(c.hero.description)+'"');
- const heroParts=c.hero.headline.match(/^(Your road to)\\s+(feeling confident\\.?)$/i);
+ const heroParts=c.hero.headline.match(/^(Your road to)\s+(feeling confident\.?)$/i);
  replace('Your road to<br><em>feeling confident.</em>',heroParts?esc(heroParts[1])+'<br><em>'+esc(heroParts[2])+'</em>':esc(c.hero.headline));
  replace('A calm start. A clear plan. Lessons that move at your pace.',esc(c.hero.description));
  replace('AUTOMATIC DRIVING LESSONS IN LIVERPOOL',esc(c.hero.eyebrow));
  replace('Ask about your first lesson →',esc(c.hero.primaryCtaLabel)+' <span class="cta-arrow">→</span>');
  // Update prominent branding without replacing embedded scripts, data URLs or CSS.
- replace('Greenlight <span>Driving</span>',brand);
+ replace('Greenlight <span>Driving</span>',c.branding.schoolName.trim().toLowerCase()==='greenlight driving'?'Greenlight <span>Driving</span>':brand);
  replace('<strong>Greenlight Driving</strong>','<strong>'+brand+'</strong>');
  replace('Meet Greenlight Driving<br><small>and Alex behind the wheel!</small>','Meet '+brand+'<br><small>and '+esc(c.instructor.name||'your instructor')+' behind the wheel!</small>');
  replace('© 2026 Greenlight Driving · Demonstration','© 2026 '+brand+' · Demonstration');
@@ -60,19 +60,10 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
  }
  // Keep the original enquiry form layout, but never send or store test details.
  // The browser explicitly confirms what would happen after production activation.
- const form='<form class="form-card" id="yotion-demo-enquiry">'+
-  '<h3>Tell us what would work.</h3><p class="fine">Demonstration only — no details are sent or saved.</p>'+
-  '<label for="learner-name">Your name</label><input id="learner-name" name="name" required maxlength="120" autocomplete="name">'+
-  '<label for="learner-email">Email address</label><input id="learner-email" name="email" type="email" required maxlength="254" autocomplete="email">'+
-  '<label for="learner-area">Your area / postcode</label><input id="learner-area" name="area" required maxlength="100">'+
-  '<label for="learner-experience">Driving experience</label><select id="learner-experience" name="experience"><option>Complete beginner</option><option>Some lessons</option><option>Returning to driving</option></select>'+
-  '<label for="learner-times">Preferred lesson times</label><textarea id="learner-times" name="availability" rows="3" maxlength="500"></textarea>'+
-  '<label for="learner-notes">Anything else?</label><textarea id="learner-notes" name="notes" rows="3" maxlength="1000"></textarea>'+
-  '<button class="btn full" type="submit">Send my enquiry</button>'+
-  '<p id="yotion-enquiry-confirmation" role="status" aria-live="polite" hidden style="padding:14px;border-radius:10px;background:#e6f5ef;color:#152b36">In production, these details would be emailed securely to the driving instructor. This is a demonstration: nothing has been sent or stored.</p></form>';
- const enquiry='<div class="wrap form-layout"><div><div class="eyebrow">ONE SMALL NEXT STEP</div><h2>'+esc(c.contact.heading)+'</h2><p>'+esc(c.contact.description)+'</p></div>'+form+'</div>';
- replaceSection('<section class="section soft" id="enquire">','</main>',
-  '<section class="section soft" id="enquire">'+enquiry+'</section>');
+ // Preserve the sample contact layout, supporting text and example placeholders.
+ page=page.replace('id="sample-form"','id="yotion-demo-enquiry"');
+ page=page.replace('Review my enquiry →</button>','Send my enquiry <span class="cta-arrow">→</span></button>');
+ page=page.replace('No payment or account needed.','Demonstration only — no details are sent or saved.');
  const demoScript='<script>(function(){var f=document.getElementById("yotion-demo-enquiry");if(!f)return;f.addEventListener("submit",function(e){e.preventDefault();if(!f.reportValidity())return;var n=document.getElementById("yotion-enquiry-confirmation");n.hidden=false;n.scrollIntoView({behavior:"smooth",block:"nearest"});});})();</script>';
  replace('</body>',demoScript+'</body>');
  page=page.replace(/Fictional demonstration school · Liverpool/g,'');
@@ -83,7 +74,7 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
  const initial=Array.from(c.branding.schoolName.trim())[0]?.toLocaleLowerCase("en-GB")||"d";
  page=page.replace(/(<span class="school-icon" aria-hidden="true">)[^<]*(<\/span>)/,(_,open,close)=>open+esc(initial)+close);
  page=page.replace(/(<span class="chat-avatar" aria-hidden="true">)[^<]*(<\/span>)/,(_,open,close)=>open+esc(initial)+close);
- const shortBrand=esc(c.branding.schoolName.trim().split(/\\s+/)[0]||c.branding.schoolName);
+ const shortBrand=esc(c.branding.schoolName.trim().split(/\s+/)[0]||c.branding.schoolName);
  page=page.replace(/Ask Greenlight/g,()=> 'Ask '+shortBrand);
  const icon='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="16" fill="#172e2b"/><text x="32" y="46" text-anchor="middle" font-family="Arial,sans-serif" font-weight="bold" font-size="42" fill="white">'+esc(initial)+'</text></svg>';
  page=page.replace(/<link rel="icon"[^>]*>/,
@@ -114,6 +105,6 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
   page=page.slice(0,chatStart)+'<script>'+script+'</script>'+page.slice(chatEnd+9);
  }
 
- replace('</head>','<style>#yotion-demo-enquiry :is(input,select,textarea){font-size:16px}.yotion-draft-banner{position:relative;z-index:100;background:#152b36;color:white;text-align:center;padding:10px;font:600 13px system-ui}</style><meta name="robots" content="noindex,nofollow">'+(options.published?'<meta name="yotion-demo-ready" content="true">':'')+'</head>');
+ replace('</head>','<style>.site-footer .footer-bottom{margin-top:34px;padding-top:26px}.btn .cta-arrow{display:inline-block;transition:transform .25s ease}.btn:hover .cta-arrow{transform:translateX(5px)}.btn,.nav-cta,.hero-chat-link{transition:background-color .25s ease,color .25s ease,transform .25s ease,box-shadow .25s ease}.btn:hover{transform:translateY(-2px)}@media(prefers-reduced-motion:reduce){.btn,.nav-cta,.hero-chat-link,.cta-arrow{transition:none!important}}</style><style>#yotion-demo-enquiry :is(input,select,textarea){font-size:16px}.yotion-draft-banner{position:relative;z-index:100;background:#152b36;color:white;text-align:center;padding:10px;font:600 13px system-ui}</style><meta name="robots" content="noindex,nofollow">'+(options.published?'<meta name="yotion-demo-ready" content="true">':'')+'</head>');
  return page;
 }
