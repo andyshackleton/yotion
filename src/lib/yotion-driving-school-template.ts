@@ -76,7 +76,9 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
  page=page.replace(/(<span class="chat-avatar" aria-hidden="true">)[^<]*(<\/span>)/,(_,open,close)=>open+esc(initial)+close);
  const shortBrand=esc(c.branding.schoolName.trim().split(/\s+/)[0]||c.branding.schoolName);
  page=page.replace(/Ask Greenlight/g,()=> 'Ask '+shortBrand);
- const icon='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="16" fill="#172e2b"/><text x="32" y="46" text-anchor="middle" font-family="Arial,sans-serif" font-weight="bold" font-size="42" fill="white">'+esc(initial)+'</text></svg>';
+ const iconColour:Record<string,string>={green:"#087f78",blue:"#0d397a",purple:"#6840a0",charcoal:"#333c43",emerald:"#087e60",red:"#b43e47",orange:"#bd5a26",amber:"#a66c11",pink:"#b6467a",burgundy:"#762e48",navy:"#1e4267"};
+ const faviconColour=iconColour[c.branding.colour]||"#087f78";
+ const icon='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="16" fill="'+faviconColour+'"/><text x="32" y="46" text-anchor="middle" font-family="Arial,sans-serif" font-weight="bold" font-size="42" fill="white">'+esc(initial)+'</text></svg>';
  page=page.replace(/<link rel="icon"[^>]*>/,
   '<link rel="icon" href="data:image/svg+xml,'+encodeURIComponent(icon)+'">');
  // The original chatbot script contains Greenlight-specific prices, locations and
