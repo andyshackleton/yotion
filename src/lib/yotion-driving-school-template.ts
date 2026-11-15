@@ -31,6 +31,7 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
  replace('Ask about your first lesson →',esc(c.hero.primaryCtaLabel)+' <span class="cta-arrow">→</span>');
  replace('Ask about lessons →','Contact Us →');
  replace('Ask a quick question ','Ask');
+ replace('</head>','<style>.nav nav .nav-chat{background:var(--teal);color:#fff;border:1px solid var(--teal);border-radius:9px;padding:11px 17px;font-weight:700;cursor:pointer;transition:background .2s ease,transform .2s ease}.nav nav .nav-chat:hover{filter:brightness(.92);transform:translateY(-1px)}.nav nav .nav-cta{background:transparent;color:var(--teal);border:1px solid var(--teal);border-radius:9px;padding:11px 17px;transition:background .2s ease,color .2s ease}.nav nav .nav-cta:hover{background:var(--mint)}</style></head>');
  // Update prominent branding without replacing embedded scripts, data URLs or CSS.
  const nameParts=c.branding.schoolName.trim().split(/\s+/);
  const colouredName=nameParts.length>1
