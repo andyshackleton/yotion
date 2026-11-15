@@ -61,11 +61,16 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
  };
  // One layout for every school. Only the content changes.
  updateSection("lessons","instructor",html=>{
-  const cards=c.lessons.items.map(item=>'<article class="outcome"><h3>'+esc(item.title)+'</h3>'+(item.price?'<div class="sample-price">'+esc(item.price)+'</div>':'')+'<p class="sample-info">'+esc(item.description)+'</p></article>').join('');
-  const areaCard=c.teachingAreas.areas.length?'<article class="outcome"><h3>'+esc(c.teachingAreas.heading)+'</h3><p class="sample-info">'+c.teachingAreas.areas.map(esc).join(' · ')+'</p></article>':'';
+  // The Sample's three-card structure is fixed; values come from the school config.
+  const lessonLines=c.lessons.items.map(item=>'<div class="lesson-option"><strong>'+esc(item.title)+'</strong>'+(item.price?'<div class="sample-price">'+esc(item.price)+'</div>':'')+'<p class="sample-info">'+esc(item.description)+'</p></div>').join('');
+  const cards=[
+   '<article class="outcome"><h3>'+esc(c.lessons.heading)+'</h3>'+(lessonLines||'<p class="sample-info">'+esc(c.lessons.intro)+'</p>')+'</article>',
+   '<article class="outcome"><h3>'+esc(c.teachingAreas.heading)+'</h3><p class="sample-info">'+(c.teachingAreas.areas.length?c.teachingAreas.areas.map(esc).join(' · '):'Ask the instructor to confirm coverage.')+'</p><p class="fine">Pickup coverage must be confirmed before booking.</p></article>',
+   '<article class="outcome"><h3>When we teach</h3><p class="sample-info">'+esc(c.teachingAreas.schedule?.trim()||'Teaching days and times to be confirmed.')+'</p><p class="fine">This is not live availability. Please enquire to confirm a suitable time.</p></article>'
+  ].join('');
   return html.replace('Simple lessons. Clear prices.',esc(c.lessons.heading))
    .replace(/<div class="outcome-grid">[\s\S]*?<\/div><\/div><\/section>$/,
-    '<div class="outcome-grid">'+cards+areaCard+'</div></div></section>');
+    '<div class="outcome-grid">'+cards+'</div></div></section>');
  });
  updateSection("questions","enquire",html=>{
   const faqs=c.faq.items.map(item=>'<details><summary>'+esc(item.question)+'</summary><p>'+esc(item.answer)+'</p></details>').join('');
