@@ -39,29 +39,42 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
  replace('Alex and his learner car · AI-generated example image','AI-generated example image');
 
 
- // Replace sample-only claims and content with the instructor's confirmed configuration.
- const replaceSection=(start:string,end:string,markup:string)=>{
-  const a=page.indexOf(start),b=a<0?-1:page.indexOf(end,a+start.length);
-  if(a>=0&&b>a)page=page.slice(0,a)+markup+page.slice(b);
+ // Update the content inside original sections without replacing their
+ // wrappers, typography, responsive grid or scroll animations.
+ const updateSection=(id:string,nextId:string,transform:(html:string)=>string)=>{
+  const start=page.indexOf('id="'+id+'"');
+  const end=start<0?-1:page.indexOf('id="'+nextId+'"',start+id.length);
+  if(start<0||end<0)return;
+  const open=page.lastIndexOf('<section',start);
+  const close=page.lastIndexOf('<section',end);
+  if(open<0||close<=open)return;
+  page=page.slice(0,open)+transform(page.slice(open,close))+page.slice(close);
  };
- // The internal Greenlight showcase is the visual parity baseline. Retain all
- // original sections and their ordering while the generic section bindings
- // are being migrated. Other tenants continue to use configured content.
  if(c.branding.schoolName.trim().toLowerCase()!=="greenlight driving"){
- const wrap=(id:string,heading:string,body:string,soft=false)=>
-  '<section class="section'+(soft?' soft':'')+'" id="'+id+'"><div class="wrap"><h2>'+esc(heading)+'</h2>'+body+'</div></section>';
- const lessonCards=c.lessons.items.map(x=>'<article class="outcome"><h3>'+esc(x.title)+'</h3>'+(x.price?'<div class="sample-price">'+esc(x.price)+'</div>':'')+'<p class="sample-info">'+esc(x.description)+'</p></article>').join("");
- replaceSection('<section class="section" id="lessons">','<section class="section soft" id="instructor">',
-  wrap('lessons',c.lessons.heading,'<p>'+esc(c.lessons.intro)+'</p>'+(lessonCards?'<div class="outcome-grid">'+lessonCards+'</div>':'')));
- const instructorBody='<p class="lead">'+esc(c.instructor.biography)+'</p>';
- replaceSection('<section class="section soft" id="instructor">','<section class="section learner-stories" id="stories"',
-  wrap('instructor',c.instructor.heading,instructorBody+'<h3>'+esc(c.teachingAreas.heading)+'</h3>'+(c.teachingAreas.areas.length?'<p>'+c.teachingAreas.areas.map(esc).join(' · ')+'</p>':''),true));
- const reviewCards=c.reviews.items.map(x=>'<article class="story-card"><blockquote>'+esc(x.quote)+'</blockquote><p>'+esc(x.attribution)+'</p></article>').join("");
- replaceSection('<section class="section learner-stories" id="stories"','<section class="section" id="questions">',
-  c.reviews.items.length?wrap('stories',c.reviews.heading,'<div class="stories-grid">'+reviewCards+'</div>'):'');
- const faqItems=c.faq.items.map(x=>'<details><summary>'+esc(x.question)+'</summary><p>'+esc(x.answer)+'</p></details>').join("");
- replaceSection('<section class="section" id="questions">','<section class="section soft" id="enquire">',
-  c.faq.items.length?wrap('questions',c.faq.heading,faqItems):'');
+  updateSection("lessons","instructor",html=>{
+   const cards=c.lessons.items.map(item=>'<article class="outcome"><h3>'+esc(item.title)+'</h3>'+(item.price?'<div class="sample-price">'+esc(item.price)+'</div>':'')+'<p class="sample-info">'+esc(item.description)+'</p></article>').join("");
+   return html.replace('Simple lessons. Clear prices.',esc(c.lessons.heading))
+    .replace(/<div class="outcome-grid">[\\s\\S]*?<\\/div>/,
+     '<div class="outcome-grid">'+cards+'</div>');
+  });
+  updateSection("questions","enquire",html=>{
+   const faqs=c.faq.items.map(item=>'<details><summary>'+esc(item.question)+'</summary><p>'+esc(item.answer)+'</p></details>').join("");
+   return html.replace("It's okay to ask.",esc(c.faq.heading))
+    .replace(/<details>[\\s\\S]*?<\\/details>(?=\\s*<\\/div>\\s*<\\/section>)/,faqs);
+  });
+  // Instructor and testimonial layouts require dedicated bindings for
+  // imagery and verification; do not publish fictional Greenlight reviews.
+  const wrap=(id:string,heading:string,body:string,soft=false)=>
+   '<section class="section'+(soft?' soft':'')+'" id="'+id+'"><div class="wrap"><h2>'+esc(heading)+'</h2>'+body+'</div></section>';
+  const replaceSection=(start:string,end:string,markup:string)=>{
+   const from=page.indexOf(start),to=from<0?-1:page.indexOf(end,from+start.length);
+   if(from>=0&&to>from)page=page.slice(0,from)+markup+page.slice(to);
+  };
+  replaceSection('<section class="section soft" id="instructor">','<section class="section learner-stories" id="stories"',
+   wrap('instructor',c.instructor.heading,'<p class="lead">'+esc(c.instructor.biography)+'</p><h3>'+esc(c.teachingAreas.heading)+'</h3><p>'+c.teachingAreas.areas.map(esc).join(' · ')+'</p>',true));
+  const reviews=c.reviews.items.map(item=>'<article class="story-card"><blockquote>'+esc(item.quote)+'</blockquote><p>'+esc(item.attribution)+'</p></article>').join("");
+  replaceSection('<section class="section learner-stories" id="stories"','<section class="section" id="questions">',
+   reviews?wrap('stories',c.reviews.heading,'<div class="stories-grid">'+reviews+'</div>'):'');
  }
  // Keep the original enquiry form layout, but never send or store test details.
  // The browser explicitly confirms what would happen after production activation.
