@@ -19,6 +19,7 @@ export async function POST(request:NextRequest,context:{params:Promise<{id:strin
   const config=structuredClone(original);
   config.hero.eyebrow=value(f,"eyebrow",100);
   config.hero.headline=value(f,"headline",180);
+  config.hero.headlineAccent=value(f,"headline_accent",180);
   config.hero.description=value(f,"intro",600);
   config.hero.primaryCtaLabel=value(f,"cta",70);
   config.lessons.heading=value(f,"lessons_heading",100);
