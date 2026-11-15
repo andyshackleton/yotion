@@ -117,6 +117,7 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
 
  }
  page=applySharedWebsitePolish(page);
+ replace('</head>','<style>#yotion-demo-enquiry :is(input,select,textarea){font-size:16px}</style><meta name="robots" content="noindex,nofollow">'+(options.published?'<meta name="yotion-demo-ready" content="true">':'')+'</head>');
 
  return page;
 }
