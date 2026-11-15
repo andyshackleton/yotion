@@ -83,7 +83,7 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
    }).join('');
    return html.replace('A little more confidence.<br>A lot more independence.',esc(c.reviews.heading))
     .replace(/<div class="stories-notice">[\s\S]*?<\/div>/,'')
-    .replace(/<div class="stories-grid">[\s\S]*?<\/div><\\/div><\\/section>$/,
+    .replace(/<div class="stories-grid">[\s\S]*?<\/div><\/div><\/section>$/,
       '<div class="stories-grid">'+cards+'</div></div></section>');
   });
  }
