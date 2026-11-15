@@ -25,10 +25,16 @@ export async function POST(request:NextRequest,context:{params:Promise<{id:strin
    return back(request,id,"published");
   }
   if(action!=="create")return back(request,id,"invalid");
-  const school=String(f.get("school")||"").trim(),slug=String(f.get("slug")||"").trim().toLowerCase(),theme=String(f.get("theme")||"green"),headline=String(f.get("headline")||"").trim(),intro=String(f.get("intro")||"").trim(),lessons=String(f.get("lessons")||"").trim(),areas=String(f.get("areas")||"").trim();
-  if(!school||!headline||!intro||!slug.match(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)||slug.length>80||school.length>120||headline.length>180||intro.length>600||lessons.length>2500||areas.length>1000)return back(request,id,"invalid");
+  const school=String(f.get("school")||"").trim(),slug=String(f.get("slug")||"").trim().toLowerCase(),theme=String(f.get("theme")||"green");
   const existing=await db().rpc("yotion_admin_get_website_demo",{p_request_id:id});
   if(existing.error)throw existing.error;
+  // The setup form edits identity and theme only. Never overwrite structured website content
+  // with missing form values when an existing demo is updated.
+  const headline=String(existing.data?.headline||"Learn to drive with confidence").trim();
+  const intro=String(existing.data?.introduction||"Get in touch to ask about lessons, teaching areas and availability.").trim();
+  const lessons=String(existing.data?.lesson_details||"").trim();
+  const areas=String(existing.data?.teaching_areas||"").trim();
+  if(!school||!headline||!intro||!slug.match(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)||slug.length>80||school.length>120||headline.length>180||intro.length>600||lessons.length>2500||areas.length>1000)return back(request,id,"invalid");
   // Preserve the existing access token when editing. New tokens are generated only for a new demo.
   // The full token is retained in the saved demo URL on the request, never in the demo RPC response.
   let token="";
