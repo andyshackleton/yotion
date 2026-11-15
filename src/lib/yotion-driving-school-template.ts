@@ -105,8 +105,6 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
  if(c.branding.schoolName.trim().toLowerCase()==="greenlight driving"){
   // Non-modal dialog allows the page to scroll while chat stays visible.
   page=page.replace("chat.showModal()","chat.show()");
-  page=page.replaceAll("a.onclick=()=>chat.close();","a.onclick=(event)=>{event.preventDefault();const target=document.querySelector(a.getAttribute('href'));if(target)target.scrollIntoView({behavior:'smooth',block:'start'});};");
-  page=page.replaceAll("q.onclick=()=>chat.close();","q.onclick=(event)=>{event.preventDefault();const target=document.querySelector(q.getAttribute('href'));if(target)target.scrollIntoView({behavior:'smooth',block:'start'});};");
  }else{
  const chatStart=page.indexOf('<script>',page.indexOf('id="chat-dialog"'));
  const chatEnd=chatStart<0?-1:page.indexOf('</script>',chatStart);
