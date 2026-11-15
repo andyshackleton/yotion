@@ -51,6 +51,7 @@ export async function POST(request:NextRequest,context:{params:Promise<{id:strin
    knowledge.push({id:ids[i]||String(i+1),topic:topics[i],question:questions[i],answer:answers[i],approved:f.has("knowledge_approved_"+i)});
   }
   config.assistant.knowledge=knowledge;
+  config.assistant.unansweredQuestions=[...new Set(lines(value(f,"assistant_gaps",6000)).slice(0,50).map(x=>x.slice(0,250)))];
   config.assistant.welcomeMessage=value(f,"assistant_welcome",300);
   config.assistant.fallbackMessage=value(f,"assistant_fallback",500)||"I don’t have a confirmed answer to that question. Please use the enquiry form to ask the instructor.";
   config.contact.heading=value(f,"contact_heading",100);
