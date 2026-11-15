@@ -78,12 +78,16 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
   let result=html.replace("Hello, I'm Alex.",heading);
   result=result.replace(/<div class="instructor-copy">[\s\S]*?<\/div><\/div><\/div><div class="journey">/,
    '<div class="instructor-copy"><div class="eyebrow">MEET YOUR INSTRUCTOR</div><h2>'+heading+'</h2><p>'+esc(c.instructor.biography)+'</p></div></div></div><div class="journey">');
+  // Keep the Sample's existing illustration until a website-specific photo is supplied.
+  // Never replace the photo component with a lettermark.
   if(c.instructor.photoUrl&&/^https:\/\//i.test(c.instructor.photoUrl)){
    result=result.replace(/(<figure class="instructor-portrait">[\s\S]*?<img src=")[^"]+("[^>]*>)/,
     (_,before,after)=>before+esc(c.instructor.photoUrl)+after);
+   result=result.replace('AI-generated example portrait of Alex, the fictional Greenlight instructor',esc(c.instructor.name||'Driving instructor'));
+   result=result.replace('AI-generated example portrait','Instructor photograph');
   }else{
-   result=result.replace(/<figure class="instructor-portrait">[\s\S]*?<\/figure>/,
-    '<figure class="instructor-portrait"><div class="face-circle"><span class="instructor-placeholder" aria-label="Instructor photo pending">'+esc((c.instructor.name||c.branding.schoolName).charAt(0).toLowerCase())+'</span></div></figure>');
+   result=result.replace('AI-generated example portrait of Alex, the fictional Greenlight instructor','Illustrative instructor portrait, not a photograph of this school’s instructor');
+   result=result.replace('AI-generated example portrait</figcaption>','Illustrative image · Replace before launch</figcaption>');
   }
   return result;
  });
