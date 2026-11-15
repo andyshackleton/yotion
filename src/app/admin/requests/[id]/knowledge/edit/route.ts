@@ -3,7 +3,7 @@ import {isAdmin} from "../../../../../../lib/yotion-admin-auth";
 import {db} from "../../../../../../lib/yotion-db";
 import {isWebsiteConfig} from "../../../../../../lib/yotion-website-config";
 export const dynamic="force-dynamic";
-const esc=(v:unknown)=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;":"&quot;","'":"&#39;"}[c]??c));
+const esc=(v:unknown)=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]??c));
 export async function GET(request:NextRequest,context:{params:Promise<{id:string}>}){
  if(!await isAdmin())return NextResponse.redirect(new URL("/admin/login",request.url));
  const {id}=await context.params;
