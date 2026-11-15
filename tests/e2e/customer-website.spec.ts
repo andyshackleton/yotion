@@ -48,3 +48,48 @@ test("mobile hamburger menu opens and closes without changing header layout",asy
  await toggle.click();
  await expect(page.locator("#customer-site-nav")).toBeHidden();
 });
+
+const SAMPLE_URL="https://sample.yotion.co.uk/";
+const HARBOUR_PREVIEW="https://yotion.co.uk/admin/requests/fd855349-5a6a-42f2-aa3e-5d36a104b58e/preview";
+
+test("customer site retains the approved Sample section structure",async({page})=>{
+ await page.goto(SAMPLE_URL);
+ const sample=await page.evaluate(()=>{
+  const section=(id:string)=>document.querySelector(id);
+  return {
+   cards:section("#lessons")?.querySelectorAll(".outcome").length,
+   journey:section("#instructor")?.querySelectorAll(".journey-stage").length,
+   hasPortrait:!!section("#instructor")?.querySelector(".instructor-portrait"),
+   hasStories:!!section("#stories .stories-heading"),
+   hasFaq:!!section("#questions details"),
+  };
+ });
+ await page.goto("/");
+ const customer=await page.evaluate(()=>{
+  const section=(id:string)=>document.querySelector(id);
+  return {
+   cards:section("#lessons")?.querySelectorAll(".outcome").length,
+   journey:section("#instructor")?.querySelectorAll(".journey-stage").length,
+   hasPortrait:!!section("#instructor")?.querySelector(".instructor-portrait"),
+   hasStories:!!section("#stories .stories-heading"),
+   hasFaq:!!section("#questions details"),
+  };
+ });
+ expect(customer).toEqual(sample);
+});
+
+test("Harbour View uses the same customer template with its own content",async({browser})=>{
+ test.skip(!process.env.YOTION_ADMIN_STORAGE_STATE,"Admin browser session is not configured for CI");
+ const context=await browser.newContext({storageState:process.env.YOTION_ADMIN_STORAGE_STATE});
+ try{
+  const page=await context.newPage();
+  await page.goto(HARBOUR_PREVIEW);
+  await expect(page.locator("#lessons h2")).toHaveText("Simple lessons. Clear prices.");
+  await expect(page.locator("#lessons .outcome")).toHaveCount(3);
+  await expect(page.locator("#instructor .journey-stage")).toHaveCount(3);
+  await expect(page.locator("#stories .stories-heading")).toBeVisible();
+  await expect(page.locator("body")).toContainText("Harbour View Driving");
+  await expect(page.locator("#lessons")).toContainText("Bootle");
+  await expect(page.locator("#instructor")).not.toContainText("Hello, I'm Alex.");
+ }finally{await context.close()}
+});
