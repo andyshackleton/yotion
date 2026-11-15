@@ -81,8 +81,15 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
  const icon='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="16" fill="'+faviconColour+'"/><text x="32" y="46" text-anchor="middle" font-family="Arial,sans-serif" font-weight="bold" font-size="42" fill="white">'+esc(initial)+'</text></svg>';
  page=page.replace(/<link rel="icon"[^>]*>/,
   '<link rel="icon" href="data:image/svg+xml,'+encodeURIComponent(icon)+'">');
- // The original chatbot script contains Greenlight-specific prices, locations and
- // fictional answers. Replace it with a local FAQ assistant sourced only from config.
+ // The approved Greenlight assistant includes branded message bubbles,
+ // topic sources and contextual links. Keep its original implementation.
+ // Other websites use the config-driven assistant until it reaches parity.
+ if(c.branding.schoolName.trim().toLowerCase()==="greenlight driving"){
+  // Non-modal dialog allows the page to scroll while chat stays visible.
+  page=page.replace("chat.showModal()","chat.show()");
+  page=page.replaceAll("a.onclick=()=>chat.close();","a.onclick=(event)=>{event.preventDefault();const target=document.querySelector(a.getAttribute('href'));if(target)target.scrollIntoView({behavior:'smooth',block:'start'});};");
+  page=page.replaceAll("q.onclick=()=>chat.close();","q.onclick=(event)=>{event.preventDefault();const target=document.querySelector(q.getAttribute('href'));if(target)target.scrollIntoView({behavior:'smooth',block:'start'});};");
+ }else{
  const chatStart=page.indexOf('<script>',page.indexOf('id="chat-dialog"'));
  const chatEnd=chatStart<0?-1:page.indexOf('</script>',chatStart);
  if(chatStart>=0&&chatEnd>chatStart){
@@ -107,6 +114,7 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
   page=page.slice(0,chatStart)+'<script>'+script+'</script>'+page.slice(chatEnd+9);
  }
 
+ }
  replace('</head>','<style>.site-footer .footer-bottom{margin-top:34px;padding-top:26px}.btn .cta-arrow{display:inline-block;transition:transform .25s ease}.btn:hover .cta-arrow{transform:translateX(5px)}.btn,.nav-cta,.hero-chat-link{transition:background-color .25s ease,color .25s ease,transform .25s ease,box-shadow .25s ease}.btn:hover{transform:translateY(-2px)}@media(prefers-reduced-motion:reduce){.btn,.nav-cta,.hero-chat-link,.cta-arrow{transition:none!important}}</style><style>#yotion-demo-enquiry :is(input,select,textarea){font-size:16px}.yotion-draft-banner{position:relative;z-index:100;background:#152b36;color:white;text-align:center;padding:10px;font:600 13px system-ui}</style><meta name="robots" content="noindex,nofollow">'+(options.published?'<meta name="yotion-demo-ready" content="true">':'')+'</head>');
  return page;
 }
