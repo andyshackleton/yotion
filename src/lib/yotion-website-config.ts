@@ -15,7 +15,7 @@ export interface WebsiteConfig {
  reviews: {heading:string;items:Array<{id:string;quote:string;attribution:string}>;};
  faq: {heading:string;items:Array<{id:string;question:string;answer:string}>;};
  contact: {heading:string;description:string;email:string;phone?:string;whatsapp?:string;};
- assistant: {enabled:boolean;welcomeMessage?:string;};
+ assistant: {enabled:boolean;welcomeMessage?:string;knowledge?:Array<{id:string;topic:string;question:string;answer:string;approved:boolean}>;fallbackMessage?:string;};
 }
 export const BRAND_COLOURS:readonly BrandColour[]=["green","blue","purple","charcoal","emerald","red","orange","amber","pink","burgundy","navy"];
 export function starterWebsiteConfig(input:{schoolName:string;colour?:string;email:string;location?:string}):WebsiteConfig {
@@ -30,7 +30,7 @@ export function starterWebsiteConfig(input:{schoolName:string;colour?:string;ema
   reviews:{heading:"What learners say",items:[]},
   faq:{heading:"Common questions",items:[{id:"sample-faq-1",question:"I'm nervous. Can I take things slowly?",answer:"Example answer: lessons can be planned around your confidence and experience. Confirm with the instructor."},{id:"sample-faq-2",question:"Do you teach manual?",answer:"Example answer: this template is for automatic lessons. Confirm the instructor's actual transmission options."}]},
   contact:{heading:"Get in touch",description:"Ask about lesson availability and next steps.",email:input.email},
-  assistant:{enabled:false}
+  assistant:{enabled:false,knowledge:[],fallbackMessage:"I don’t have a confirmed answer to that question. Please use the enquiry form to ask the instructor."}
  };
 }
 export function isWebsiteConfig(value:unknown):value is WebsiteConfig {
