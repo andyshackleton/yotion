@@ -12,7 +12,7 @@ const nice=(s:string)=>s.replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase());
 export async function GET(request:NextRequest,context:{params:Promise<{id:string}>}){
  if(!await isAdmin())return NextResponse.redirect(new URL("/admin/login",request.url));
  const {id}=await context.params;if(!/^[0-9a-f-]{36}$/i.test(id))return new NextResponse("Invalid request",{status:400});
- return NextResponse.redirect(new URL("/admin/requests/"+id+"/workspace",request.url));
+ if(request.nextUrl.searchParams.get("legacy")!=="1")return NextResponse.redirect(new URL("/admin/requests/"+id+"/workspace",request.url));
  let record:Record<string,unknown>|null=null;let events:Record<string,unknown>[]=[];let demo:Record<string,unknown>|null=null;let error="";
  try{const result=await db().rpc("yotion_admin_get_demo_request",{p_id:id});if(result.error)throw result.error;record=result.data?.request??null;events=result.data?.events??[];const demoResult=await db().rpc("yotion_admin_get_website_demo",{p_request_id:id});if(demoResult.error)throw demoResult.error;demo=demoResult.data??null}catch(e){console.error("Yotion admin request load failed",e);error="Unable to load this request."}
  if(!record&&!error)return new NextResponse("Request not found",{status:404});
