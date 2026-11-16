@@ -1,0 +1,23 @@
+import {NextRequest,NextResponse} from "next/server";
+import {isAdmin} from "../../../../../lib/yotion-admin-auth";
+import {db} from "../../../../../lib/yotion-db";
+import {isWebsiteConfig} from "../../../../../lib/yotion-website-config";
+import {customerWorkspaceShell} from "../../../../../lib/yotion-admin-workspace";
+export const dynamic="force-dynamic";
+const esc=(v:unknown)=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]??c));
+const stages=["received","reviewing","preparing","ready","sent","converted","declined"];
+export async function GET(request:NextRequest,context:{params:Promise<{id:string}>}){
+ if(!await isAdmin())return NextResponse.redirect(new URL("/admin/login",request.url));
+ const {id}=await context.params;
+ if(!/^[0-9a-f-]{36}$/i.test(id))return new NextResponse("Invalid request",{status:400});
+ const [req,demo]=await Promise.all([db().rpc("yotion_admin_get_demo_request",{p_id:id}),db().rpc("yotion_admin_get_website_demo",{p_request_id:id})]);
+ if(req.error||demo.error)return new NextResponse("Unable to load publishing workspace",{status:500});
+ const r=req.data?.request;if(!r)return new NextResponse("Customer not found",{status:404});
+ const cfg=isWebsiteConfig(demo.data?.config)?demo.data.config:null;
+ const approved=cfg?.assistant.knowledge?.filter((x:{approved:boolean})=>x.approved).length||0;
+ const base="/admin/requests/"+id;
+ const checklist=[["Website draft",!!cfg,"Website content is available for review"],["Contact email",!!cfg?.contact.email,"Customer contact address configured"],["Approved assistant knowledge",approved>0,approved+" approved knowledge entries"],["Demonstration URL",!!r.demo_url,"A demonstration URL has been saved"]];
+ const status=String(r.status||"received");
+ const body='<style>.publish-grid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(290px,1fr);gap:20px}.publish-panel{background:white;border:1px solid var(--line);border-radius:14px;padding:26px}.publish-panel h2{margin:0 0 10px}.publish-check{display:flex;gap:12px;padding:16px 0;border-bottom:1px solid var(--line)}.publish-check:last-child{border:0}.publish-check strong{display:block}.publish-check small{color:var(--muted)}.publish-panel label{display:block;font-weight:700;margin:20px 0 7px}.publish-panel select,.publish-panel input,.publish-panel textarea{width:100%;border:1px solid #c4d2cb;border-radius:9px;padding:12px;font:inherit}.publish-panel textarea{min-height:115px}.publish-panel button{background:var(--brand);color:white;border:0;border-radius:9px;padding:12px 18px;font:inherit;font-weight:700;cursor:pointer}@media(max-width:800px){.publish-grid{grid-template-columns:1fr}}</style><div style="display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap;margin-bottom:22px"><div><h2 style="margin:0">Publishing and delivery</h2><p class="muted">Review the website and record its delivery status.</p></div><a class="button" href="'+base+'/preview" target="_blank" rel="noopener noreferrer">Preview website</a></div><div class="publish-grid"><section class="publish-panel"><h2>Readiness checklist</h2><p class="muted">Review these checks before publishing or sending the demonstration. They are guidance, not automatic approval.</p>'+checklist.map(([name,done,detail])=>'<div class="publish-check"><span aria-hidden="true">'+(done?"✓":"○")+'</span><div><strong>'+esc(name)+'</strong><small>'+esc(detail)+'</small></div></div>').join("")+'<p class="muted">Publishing the website and sending a customer email remain separate actions. Saving this form does neither automatically.</p><a href="'+base+'?legacy=1#demo-setup">Open existing publish controls</a></section><section class="publish-panel"><h2>Delivery status</h2><form method="post" action="'+base+'"><label for="status">Request stage</label><select id="status" name="status">'+stages.map(s=>'<option value="'+s+'"'+(s===status?" selected":"")+'>'+esc(s[0].toUpperCase()+s.slice(1))+'</option>').join("")+'</select><label for="demo_url">Demonstration URL</label><input id="demo_url" name="demo_url" type="url" maxlength="1000" value="'+esc(r.demo_url||"")+'" placeholder="https://…"><label for="note">Internal note</label><textarea id="note" name="note" maxlength="4000" placeholder="Record what was reviewed or delivered"></textarea><p class="muted">Saving records an internal status update. It does not email the customer.</p><button type="submit">Save delivery status</button></form></section></div>';
+ return new NextResponse(customerWorkspaceShell({id,school:String(demo.data?.school_name||r.school||"Customer"),active:"publishing",status,body}),{headers:{"Content-Type":"text/html; charset=utf-8","Cache-Control":"no-store","X-Frame-Options":"DENY"}});
+}
