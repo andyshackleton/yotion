@@ -5,7 +5,7 @@ import {isAdmin} from "../../../../../lib/yotion-admin-auth";
 import {db} from "../../../../../lib/yotion-db";
 import {starterWebsiteConfig,isWebsiteConfig} from "../../../../../lib/yotion-website-config";
 export const dynamic="force-dynamic";
-const back=(r:NextRequest,id:string,result:string)=>NextResponse.redirect(new URL("/admin/requests/"+id+"?config="+result,r.url),303);
+const back=(r:NextRequest,id:string,result:string)=>NextResponse.redirect(new URL("/admin/requests/"+id+(r.nextUrl.searchParams.get("return")==="website"?"/website":"")+"?config="+result,r.url),303);
 const value=(f:FormData,k:string,max:number)=>String(f.get(k)||"").trim().slice(0,max);
 const lines=(s:string)=>s.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
 export async function POST(request:NextRequest,context:{params:Promise<{id:string}>}){
@@ -40,7 +40,7 @@ export async function POST(request:NextRequest,context:{params:Promise<{id:strin
   config.reviews.items=lines(value(f,"reviews",2500)).slice(0,12).map((line,i)=>{const [quote,attribution]=line.split("|").map(x=>x.trim());return{id:String(i+1),quote:(quote||"").slice(0,600),attribution:(attribution||"").slice(0,100)}});
   config.faq.heading=value(f,"faq_heading",100);
   config.faq.items=lines(value(f,"faq",3500)).slice(0,20).map((line,i)=>{const [question,answer]=line.split("|").map(x=>x.trim());return{id:String(i+1),question:(question||"").slice(0,250),answer:(answer||"").slice(0,700)}});
-  const topics=f.getAll("knowledge_topic").map(x=>String(x).trim());
+  if(f.has("knowledge_topic")){const topics=f.getAll("knowledge_topic").map(x=>String(x).trim());
   const questions=f.getAll("knowledge_question").map(x=>String(x).trim());
   const answers=f.getAll("knowledge_answer").map(x=>String(x).trim());
   const ids=f.getAll("knowledge_id").map(x=>String(x).trim());
@@ -54,10 +54,10 @@ export async function POST(request:NextRequest,context:{params:Promise<{id:strin
    seenIds.add(entryId);
    knowledge.push({id:entryId,topic:topics[i],question:questions[i],answer:answers[i],approved:f.has("knowledge_approved_"+i)});
   }
-  config.assistant.knowledge=knowledge;
-  config.assistant.unansweredQuestions=[...new Set(lines(value(f,"assistant_gaps",6000)).slice(0,50).map(x=>x.slice(0,250)))];
-  config.assistant.welcomeMessage=value(f,"assistant_welcome",300);
-  config.assistant.fallbackMessage=value(f,"assistant_fallback",500)||"I don’t have a confirmed answer to that question. Please use the enquiry form to ask the instructor.";
+  config.assistant.knowledge=knowledge;}
+  if(f.has("assistant_gaps"))config.assistant.unansweredQuestions=[...new Set(lines(value(f,"assistant_gaps",6000)).slice(0,50).map(x=>x.slice(0,250)))];
+  if(f.has("assistant_welcome"))config.assistant.welcomeMessage=value(f,"assistant_welcome",300);
+  if(f.has("assistant_fallback"))config.assistant.fallbackMessage=value(f,"assistant_fallback",500)||"I don’t have a confirmed answer to that question. Please use the enquiry form to ask the instructor.";
   config.contact.heading=value(f,"contact_heading",100);
   config.contact.description=value(f,"contact_intro",600);
   config.contact.email=value(f,"contact_email",250);
