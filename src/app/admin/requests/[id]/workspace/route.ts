@@ -18,7 +18,7 @@ export async function GET(request:NextRequest,context:{params:Promise<{id:string
  const knowledge: Array<{approved:boolean}>=cfg?.assistant.knowledge||[];
  const tasks=[
   {name:"School identity and branding",detail:"Name, website slug and brand colour",href:base,ready:!!demo.data},
-  {name:"Website content",detail:"Lessons, instructor, teaching areas and contact",href:base+"#website-sections",ready:!!cfg},
+  {name:"Website content",detail:"Lessons, instructor, teaching areas and contact",href:base+"/website",ready:!!cfg},
   {name:"Knowledge base",detail:knowledge.length+" knowledge entries · "+knowledge.filter(x=>x.approved).length+" approved",href:base+"/knowledge",ready:knowledge.some(x=>x.approved)},
   {name:"Preview website",detail:"Check the website before publishing",href:base+"/preview",ready:demo.data?.status==="published"},
   {name:"Publish and send",detail:"Review readiness and deliver the customer demo",href:base+"#send-demonstration",ready:String(record.status)==="sent"||String(record.status)==="converted"}
