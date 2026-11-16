@@ -1,0 +1,34 @@
+name: Validate Yotion changes
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: TypeScript and production build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: package.json
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: TypeScript check
+        run: npx tsc --noEmit
+      - name: Next.js production build
+        run: npm run build
