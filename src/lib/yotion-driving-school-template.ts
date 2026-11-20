@@ -118,14 +118,59 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
    .replace(/<div class="stories-grid">[\s\S]*<\/div><\/div><\/section>\s*$/,
     '<div class="stories-grid">'+body+'</div></div></section>');
  });
+
+ replace("$('#sample-form').onsubmit=", "if ($('#sample-form')) $('#sample-form').onsubmit=");
+ if(options.published){
+  replace('id="sample-form"','id="yotion-live-enquiry" method="post"');
+  replace('<button class="btn full">Review my enquiry →</button>','<span hidden><label for="enquiry-website">Leave this blank</label><input id="enquiry-website" tabindex="-1" autocomplete="off"></span><button class="btn full">Send my enquiry</button><p id="yotion-live-enquiry-status" role="status" aria-live="polite"></p>');
+  replace('<label class="check"><input type="checkbox" required><span>I understand this demo does not send an enquiry or book a lesson.</span></label>','<label class="check"><input type="checkbox" required><span>I agree to this driving school using my details to respond to my enquiry.</span></label>');
+  replace('Prepare an enquiry with the useful details together. You can review and copy it before contacting an instructor.','Send an enquiry directly to the driving school.');
+  replace('The instructor would reply','The instructor can reply');
+  replace('<p class="fine">This is a demonstration school. Use fictional details. The form prepares a message in your browser; it does not send it.</p>','');
+  replace('placeholder="Demo learner"','autocomplete="name" maxlength="100"');
+  replace('placeholder="learner@example.com"','autocomplete="email" maxlength="254"');
+  replace('id="pickup" required','id="pickup" maxlength="100" required');
+  replace('</body>',`<script>
+  (() => {
+    const form = document.getElementById("yotion-live-enquiry");
+    const status = document.getElementById("yotion-live-enquiry-status");
+    const button = form.querySelector('button');
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!form.reportValidity() || button.disabled) return;
+      button.disabled = true;
+      status.textContent = "Sending your enquiry…";
+      const fields = ["learner-name","learner-email","pickup","experience","time","learner-notes","enquiry-website"];
+      const details = Object.fromEntries(fields.map(id => [id, document.getElementById(id).value]));
+      try {
+        const response = await fetch("/api/website-enquiry", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify(details)
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error);
+        status.textContent = "Your enquiry has been sent to the driving school.";
+        form.reset();
+      } catch {
+        status.textContent = "We couldn’t send your enquiry. Please try again.";
+      } finally {
+        button.disabled = false;
+      }
+    });
+  })();
+  </script></body>`);
+ } else {
  // Keep the original enquiry form layout, but never send or store test details.
  // The browser explicitly confirms what would happen after production activation.
  // Preserve the sample contact layout, supporting text and example placeholders.
  page=page.replace('id="sample-form"','id="yotion-demo-enquiry"');
- page=page.replace('Review my enquiry →</button>','Send my enquiry <span class="cta-arrow">→</span></button>');
+ page=page.replace('Review my enquiry →</button>','Send my enquiry <span class="cta-arrow">→</span></button><p id="yotion-enquiry-confirmation" role="status" hidden>In a live website, this enquiry would be sent to the driving school.</p>');
  page=page.replace('No payment or account needed.','Demonstration only — no details are sent or saved.');
  const demoScript='<script>(function(){var f=document.getElementById("yotion-demo-enquiry");if(!f)return;f.addEventListener("submit",function(e){e.preventDefault();if(!f.reportValidity())return;var n=document.getElementById("yotion-enquiry-confirmation");n.hidden=false;n.scrollIntoView({behavior:"smooth",block:"nearest"});});})();</script>';
  replace('</body>',demoScript+'</body>');
+
+ }
  page=page.replace(/Fictional demonstration school · Liverpool/g,'');
  page=page.replace(/<p class="footer-demo">[\s\S]*?<\/p>/g,'');
 
@@ -140,7 +185,7 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
  const faviconColour=iconColour[c.branding.colour]||"#087f78";
  const icon='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="16" fill="'+faviconColour+'"/><text x="32" y="46" text-anchor="middle" font-family="Arial,sans-serif" font-weight="bold" font-size="42" fill="white">'+esc(initial)+'</text></svg>';
  page=page.replace(/<link rel="icon"[^>]*>/,
-  '<link rel="icon" href="data:image/svg+xml,'+encodeURIComponent(icon)+'">');
+  '<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,'+encodeURIComponent(icon)+'">');
  // Shared chatbot implementation and shared visual classes for every website.
  const chatStart=page.indexOf('<script>',page.indexOf('id="chat-dialog"'));
  const chatEnd=chatStart<0?-1:page.indexOf('</script>',chatStart);
@@ -179,7 +224,7 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
  // Final nav treatment: consistent palette for resting, hover and keyboard focus.
  replace('</head>','<style>.nav nav .nav-cta{background:var(--mint)!important;color:var(--teal)!important;border:1px solid transparent!important}.nav nav .nav-cta:hover,.nav nav .nav-cta:focus-visible{background:var(--teal)!important;color:#fff!important;border-color:var(--teal)!important;box-shadow:0 7px 18px rgba(0,0,0,.12)!important}.nav nav .nav-chat:hover,.nav nav .nav-chat:focus-visible{background:var(--teal)!important;color:#fff!important;filter:brightness(.9)}</style></head>');
  page=applySharedWebsitePolish(page);
- replace('</head>','<style>#yotion-demo-enquiry :is(input,select,textarea){font-size:16px}</style><meta name="robots" content="noindex,nofollow">'+(options.published?'<meta name="yotion-demo-ready" content="true">':'')+'</head>');
+ replace('</head>','<style>#yotion-demo-enquiry :is(input,select,textarea),#yotion-live-enquiry :is(input,select,textarea){font-size:16px}</style><meta name="robots" content="noindex,nofollow">'+(options.published?'<meta name="yotion-demo-ready" content="true">':'')+'</head>');
 
  return page;
 }
