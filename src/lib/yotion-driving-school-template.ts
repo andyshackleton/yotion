@@ -3,7 +3,7 @@ import {applySharedWebsitePolish} from "./yotion-shared-website-polish";
 import type {WebsiteConfig} from "./yotion-website-config";
 import {greenlightOriginalHtml} from "./yotion-greenlight-original";
 const esc=(v:unknown)=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]??c));
-/** Preserve the entire original Greenlight design, media and interactions.
+/** Preserve the entire original Greenlane design, media and interactions.
  * Personalisation is deliberately narrow until every section has a tested mapping. */
 export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:boolean}):string{
  const brand=esc(c.branding.schoolName);
@@ -19,8 +19,8 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
  page=page.replace(/<a[^>]*href="#greenlight-privacy"[^>]*>[\s\S]*?<\/a>/g,"");
 
  const replace=(from:string,to:string)=>{page=page.replace(from,()=>to)};
- replace("<title>Greenlight Driving | Automatic driving lessons in Liverpool</title>","<title>"+brand+" | Driving lessons</title>");
- replace('content="Friendly automatic driving lessons in Liverpool. Explore prices, areas and patient tuition, or ask the Greenlight assistant a quick question."','content="'+esc(c.hero.description)+'"');
+ replace("<title>Greenlane Driving | Automatic driving lessons in Liverpool</title>","<title>"+brand+" | Driving lessons</title>");
+ replace('content="Friendly automatic driving lessons in Liverpool. Explore prices, areas and patient tuition, or ask the Greenlane assistant a quick question."','content="'+esc(c.hero.description)+'"');
  const heroParts=c.hero.headline.match(/^(Your road to)\s+(feeling confident\.?)$/i);
  const colouredHeadline=c.hero.headlineAccent?.trim();
  const fallbackWords=c.hero.headline.trim().split(/\s+/);
@@ -40,10 +40,10 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
  const colouredName=nameParts.length>1
   ? esc(nameParts.slice(0,-1).join(" "))+" <span>"+esc(nameParts[nameParts.length-1])+"</span>"
   : brand;
- replace('Greenlight <span>Driving</span>',colouredName);
- replace('<strong>Greenlight Driving</strong>','<strong>'+brand+'</strong>');
- replace('Meet Greenlight Driving<br><small>and Alex behind the wheel!</small>','Meet '+brand+'<br><small>and '+esc(c.instructor.name||'your instructor')+' behind the wheel!</small>');
- replace('© 2026 Greenlight Driving · Demonstration','© 2026 '+brand+' · Demonstration');
+ replace('Greenlane <span>Driving</span>',colouredName);
+ replace('<strong>Greenlane Driving</strong>','<strong>'+brand+'</strong>');
+ replace('Meet Greenlane Driving<br><small>and Alex behind the wheel!</small>','Meet '+brand+'<br><small>and '+esc(c.instructor.name||'your instructor')+' behind the wheel!</small>');
+ replace('© 2026 Greenlane Driving · Demonstration','© 2026 '+brand+' · Demonstration');
  page=page.replaceAll('>Meet Alex</a>','>About</a>');
  replace('AI-generated example of instructor Alex beside his teal learner car','Illustrative image of a driving instructor and learner car');
  replace('Alex and his learner car · AI-generated example image','AI-generated example image');
@@ -98,10 +98,10 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
   if(c.instructor.photoUrl&&/^https:\/\//i.test(c.instructor.photoUrl)){
    result=result.replace(/(<figure class="instructor-portrait">[\s\S]*?<img src=")[^"]+("[^>]*>)/,
     (_,before,after)=>before+esc(c.instructor.photoUrl)+after);
-   result=result.replace('AI-generated example portrait of Alex, the fictional Greenlight instructor',esc(c.instructor.name||'Driving instructor'));
+   result=result.replace('AI-generated example portrait of Alex, the fictional Greenlane instructor',esc(c.instructor.name||'Driving instructor'));
    result=result.replace('AI-generated example portrait','Instructor photograph');
   }else{
-   result=result.replace('AI-generated example portrait of Alex, the fictional Greenlight instructor','Illustrative instructor portrait, not a photograph of this school’s instructor');
+   result=result.replace('AI-generated example portrait of Alex, the fictional Greenlane instructor','Illustrative instructor portrait, not a photograph of this school’s instructor');
    result=result.replace('AI-generated example portrait</figcaption>','Illustrative image · Replace before launch</figcaption>');
   }
   return result;
@@ -180,7 +180,7 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
  page=page.replace(/(<span class="school-icon" aria-hidden="true">)[^<]*(<\/span>)/,(_,open,close)=>open+esc(initial)+close);
  page=page.replace(/(<span class="chat-avatar" aria-hidden="true">)[^<]*(<\/span>)/,(_,open,close)=>open+esc(initial)+close);
  const shortBrand=esc(c.branding.schoolName.trim().split(/\s+/)[0]||c.branding.schoolName);
- page=page.replace(/Ask Greenlight/g,()=> 'Ask '+shortBrand);
+ page=page.replace(/Ask Greenlane/g,()=> 'Ask '+shortBrand);
  const iconColour:Record<string,string>={green:"#087f78",blue:"#0d397a",purple:"#6840a0",charcoal:"#333c43",emerald:"#087e60",red:"#b43e47",orange:"#bd5a26",amber:"#a66c11",pink:"#b6467a",burgundy:"#762e48",navy:"#1e4267"};
  const faviconColour=iconColour[c.branding.colour]||"#087f78";
  const icon='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="16" fill="'+faviconColour+'"/><text x="32" y="46" text-anchor="middle" font-family="Arial,sans-serif" font-weight="bold" font-size="42" fill="white">'+esc(initial)+'</text></svg>';
