@@ -10,6 +10,8 @@ export function marketingPage({ title, breadcrumb, body, pageStyles = "", metada
   pageStyles?: string;
   metadata?: string;
 }) {
+  if (process.env.VERCEL_ENV === "preview") body = body.replaceAll('href="https://sample.yotion.co.uk/"', 'href="/sample"');
+  const pageFooter = process.env.VERCEL_ENV === "preview" ? footer.replaceAll('href="https://sample.yotion.co.uk/"', 'href="/sample"') : footer;
   return new Response(`<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${title} | Yotion</title>${metadata}<link rel="icon" type="image/svg+xml" href="/yotion-icon.svg">
@@ -17,7 +19,7 @@ export function marketingPage({ title, breadcrumb, body, pageStyles = "", metada
 <a class="report-skip" href="#main">Skip to content</a>${banner}
 <div class="report-site">${header}<nav class="breadcrumbs" aria-label="Breadcrumb"><ol>
 <li><a href="/">Home</a></li><li aria-hidden="true">/</li><li aria-current="page">${breadcrumb}</li>
-</ol></nav><main id="main" class="page-content">${body}</main></div>${footer}
+</ol></nav><main id="main" class="page-content">${body}</main></div>${pageFooter}
 <script>
 const toggle=document.querySelector(".marketing-menu-toggle");
 const nav=document.getElementById("marketing-navigation");
