@@ -3,7 +3,7 @@ import {isSameOriginPost} from "../../../../../lib/yotion-admin-csrf";
 import {NextRequest,NextResponse} from "next/server";
 import {isAdmin} from "../../../../../lib/yotion-admin-auth";
 import {db} from "../../../../../lib/yotion-db";
-import {starterWebsiteConfig,isWebsiteConfig} from "../../../../../lib/yotion-website-config";
+import {type WebsiteConfig,starterWebsiteConfig,isWebsiteConfig} from "../../../../../lib/yotion-website-config";
 export const dynamic="force-dynamic";
 const back=(r:NextRequest,id:string,result:string)=>NextResponse.redirect(new URL("/admin/requests/"+id+(r.nextUrl.searchParams.get("return")==="website"?"/website":"")+"?config="+result,r.url),303);
 const value=(f:FormData,k:string,max:number)=>String(f.get(k)||"").trim().slice(0,max);
@@ -16,7 +16,7 @@ export async function POST(request:NextRequest,context:{params:Promise<{id:strin
   const f=await request.formData();
   const [demo,req]=await Promise.all([db().rpc("yotion_admin_get_website_demo",{p_request_id:id}),db().rpc("yotion_admin_get_demo_request",{p_id:id})]);
   if(demo.error||req.error||!demo.data||!req.data?.request)return back(request,id,"missing");
-  const original=isWebsiteConfig(demo.data.config)?demo.data.config:starterWebsiteConfig({schoolName:String(demo.data.school_name),colour:String(demo.data.theme),email:String(req.data.request.email)});
+  const original:WebsiteConfig=isWebsiteConfig(demo.data.config)?demo.data.config:starterWebsiteConfig({schoolName:String(demo.data.school_name),colour:String(demo.data.theme),email:String(req.data.request.email)});
   const config=structuredClone(original);
   config.hero.eyebrow=value(f,"eyebrow",100);
   config.hero.headline=value(f,"headline",180);
@@ -37,7 +37,7 @@ export async function POST(request:NextRequest,context:{params:Promise<{id:strin
   config.teachingAreas.areas=lines(value(f,"areas",1200)).slice(0,40);
   config.teachingAreas.schedule=value(f,"teaching_schedule",600);
   config.reviews.heading=value(f,"reviews_heading",100);
-  config.reviews.items=lines(value(f,"reviews",2500)).slice(0,12).map((line,i)=>{const [quote,attribution]=line.split("|").map(x=>x.trim());return{id:String(i+1),quote:(quote||"").slice(0,600),attribution:(attribution||"").slice(0,100)}});
+  config.reviews.items=lines(value(f,"reviews",2500)).slice(0,12).map((line,i)=>{const [quote,attribution,theme,milestone]=line.split("|").map(x=>x.trim());return{id:String(i+1),quote:(quote||"").slice(0,600),attribution:(attribution||"").slice(0,100),theme:theme?.slice(0,60),milestone:milestone?.slice(0,100)}});
   config.faq.heading=value(f,"faq_heading",100);
   config.faq.items=lines(value(f,"faq",3500)).slice(0,20).map((line,i)=>{const [question,answer]=line.split("|").map(x=>x.trim());return{id:String(i+1),question:(question||"").slice(0,250),answer:(answer||"").slice(0,700)}});
   if(f.has("knowledge_topic")){const topics=f.getAll("knowledge_topic").map(x=>String(x).trim());
@@ -62,7 +62,9 @@ export async function POST(request:NextRequest,context:{params:Promise<{id:strin
   config.contact.description=value(f,"contact_intro",600);
   config.contact.email=value(f,"contact_email",250);
   if(f.has("facebook_url")&&f.has("instagram_url")){
-   const socials={facebook:value(f,"facebook_url",1500),instagram:value(f,"instagram_url",1500)};
+   const socials={...config.contact.socials,facebook:value(f,"facebook_url",1500),instagram:value(f,"instagram_url",1500)};
+   if(f.has("youtube_url"))socials.youtube=value(f,"youtube_url",1500);
+   if(f.has("tiktok_url"))socials.tiktok=value(f,"tiktok_url",1500);
    for(const [platform,link] of Object.entries(socials)){
     if(!link)continue;
     let url:URL;

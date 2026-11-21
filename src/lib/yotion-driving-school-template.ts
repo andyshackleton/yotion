@@ -61,11 +61,11 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
   page=page.slice(0,open)+transform(page.slice(open,close))+page.slice(close);
  };
  const socialLinks = Object.entries(c.contact.socials||{}).flatMap(([platform,link])=>{
-  if(!link||!["facebook","instagram"].includes(platform))return [];
+  if(!link||!["facebook","instagram","youtube","tiktok"].includes(platform))return [];
   try{
    const url=new URL(link);
    if(url.protocol!=="https:"||url.username||url.password||![platform+".com","www."+platform+".com","m."+platform+".com"].includes(url.hostname)||url.pathname==="/")return [];
-   return ['<a href="'+esc(url.href)+'">'+(platform==="facebook"?"Facebook":"Instagram")+'</a>'];
+   return ['<a href="'+esc(url.href)+'">'+(platform==="facebook"?"Facebook":platform==="instagram"?"Instagram":platform==="youtube"?"YouTube":"TikTok")+'</a>'];
   }catch{return []}
  });
  if(socialLinks.length)replace('</footer>','<div class="wrap" style="padding-block:12px"><nav aria-label="Social profiles" style="display:flex;gap:16px">'+socialLinks.join("")+'</nav></div></footer>');
@@ -78,11 +78,10 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
    const price=item.price?.trim()||'';
    const formatted=price.match(/^(.*?)\s*(\/\s*(?:hour|hr|lesson))$/i);
    const priceHtml=price?'<div class="sample-price">'+esc(formatted?formatted[1].trim():price)+(formatted?' <small>'+esc(formatted[2])+'</small>':'')+'</div>':'';
-   return '<div class="lesson-option">'+(c.lessons.items.length>1?'<strong>'+esc(item.title)+'</strong>':'')+priceHtml+'<p class="sample-info">'+esc(item.description)+'</p></div>';
+   return '<div class="lesson-option">'+'<h4>'+esc(item.title)+'</h4>'+priceHtml+(item.description?'<p class="sample-info">'+esc(item.description)+'</p>':'')+'</div>';
   }).join('');
-  const lessonTitle=c.lessons.items.length===1?c.lessons.items[0].title:c.lessons.heading;
   const cards=[
-   '<article class="outcome"><h3>'+esc(lessonTitle)+'</h3>'+(c.lessons.intro?'<p class="sample-info">'+esc(c.lessons.intro)+'</p>':'')+lessonLines+'</article>',
+   '<article class="outcome"><h3>'+esc(c.lessons.heading||"Driving lessons")+'</h3>'+(c.lessons.intro?'<p class="sample-info">'+esc(c.lessons.intro)+'</p>':'')+lessonLines+'</article>',
    '<article class="outcome"><h3>'+esc(c.teachingAreas.heading)+'</h3><p class="sample-info">'+(c.teachingAreas.areas.length?c.teachingAreas.areas.map(esc).join(' · '):'Ask the instructor to confirm coverage.')+'</p><p class="fine">Pickup coverage must be confirmed before booking.</p></article>',
    '<article class="outcome" id="teaching-schedule"><h3>When we teach</h3><p class="sample-info">'+esc(c.teachingAreas.schedule?.trim()||'Teaching days and times to be confirmed.')+'</p><p class="fine">This is not live availability. Please enquire to confirm a suitable time.</p></article>'
   ].join('');
@@ -121,7 +120,7 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
   // Retain the approved Sample section even before genuine reviews are supplied.
   const cards=c.reviews.items.map(item=>{
    const initials=item.attribution.trim().split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase();
-   return '<article class="story-card"><blockquote>“'+esc(item.quote)+'”</blockquote><div class="story-person"><span class="story-initial" aria-hidden="true">'+esc(initials)+'</span><div><strong>'+esc(item.attribution)+'</strong></div></div></article>';
+   return '<article class="story-card">'+(item.theme?'<span class="story-theme">'+esc(item.theme)+'</span>':'')+'<blockquote>“'+esc(item.quote)+'”</blockquote><div class="story-person"><span class="story-initial" aria-hidden="true">'+esc(initials)+'</span><div><strong>'+esc(item.attribution)+'</strong>'+(item.milestone?'<span class="pass-date">'+esc(item.milestone)+'</span>':'')+'</div></div></article>';
   }).join('');
   const body=cards||'<p class="stories-empty">Learner stories will appear here once the instructor has supplied genuine reviews.</p>';
   return html
@@ -238,5 +237,6 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
  page=applySharedWebsitePolish(page);
  replace('</head>','<style>#yotion-demo-enquiry :is(input,select,textarea),#yotion-live-enquiry :is(input,select,textarea){font-size:16px}</style><meta name="robots" content="noindex,nofollow">'+(options.published?'<meta name="yotion-demo-ready" content="true">':'')+'</head>');
 
+ replace('</head>','<style>.lesson-option{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}.lesson-option h4{margin:0 0 5px;font-size:16px}.story-card{height:100%}</style></head>');
  return page;
 }
