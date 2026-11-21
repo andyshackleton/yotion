@@ -65,7 +65,7 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
   try{
    const url=new URL(link);
    if(url.protocol!=="https:"||url.username||url.password||![platform+".com","www."+platform+".com","m."+platform+".com"].includes(url.hostname)||url.pathname==="/")return [];
-   return ['<a href="'+esc(url.href)+'">'+({facebook:"Facebook",instagram:"Instagram",youtube:"YouTube",tiktok:"TikTok"}[platform]||platform)+'</a>'];
+   return ['<a href="'+esc(url.href)+'">'+(platform==="facebook"?"Facebook":platform==="instagram"?"Instagram":platform==="youtube"?"YouTube":"TikTok")+'</a>'];
   }catch{return []}
  });
  if(socialLinks.length)replace('</footer>','<div class="wrap" style="padding-block:12px"><nav aria-label="Social profiles" style="display:flex;gap:16px">'+socialLinks.join("")+'</nav></div></footer>');
