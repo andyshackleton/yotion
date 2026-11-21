@@ -12,9 +12,9 @@ export interface WebsiteConfig {
  lessons: {heading:string;intro:string;items:Array<{id:string;title:string;description:string;price?:string}>;};
  instructor: {heading:string;name?:string;biography:string;photoUrl?:string;profileNoteHeading?:string;profileNote?:string;};
  teachingAreas: {heading:string;areas:string[];schedule?:string;};
- reviews: {heading:string;items:Array<{id:string;quote:string;attribution:string;theme?:string;milestone?:string}>;};
+ reviews: {heading:string;items:Array<{id:string;quote:string;attribution:string;theme?:string;milestone?:string;passDate?:string}>;};
  faq: {heading:string;items:Array<{id:string;question:string;answer:string}>;};
- contact: {heading:string;description:string;email:string;phone?:string;whatsapp?:string;socials?:{facebook?:string;instagram?:string;youtube?:string;tiktok?:string};};
+ contact: {heading:string;description:string;email:string;responseTime?:string;phone?:string;whatsapp?:string;socials?:{facebook?:string;instagram?:string;youtube?:string;tiktok?:string};};
  assistant: {enabled:boolean;welcomeMessage?:string;knowledge?:Array<{id:string;topic:string;question:string;answer:string;approved:boolean}>;fallbackMessage?:string;unansweredQuestions?:string[];};
 }
 export const BRAND_COLOURS:readonly BrandColour[]=["green","blue","purple","charcoal","emerald","red","orange","amber","pink","burgundy","navy"];

@@ -26,6 +26,7 @@ export async function POST(request:NextRequest,context:{params:Promise<{id:strin
   config.lessons.heading=value(f,"lessons_heading",100);
   config.lessons.intro=value(f,"lessons_intro",1200);
   config.lessons.items=lines(value(f,"lessons",3500)).slice(0,15).map((line,i)=>{const [title,price,description]=line.split("|").map(x=>x.trim());return{id:String(i+1),title:(title||"Lesson").slice(0,100),price:(price||"").slice(0,50),description:(description||"").slice(0,500)}});
+  if(f.has("instructor_name"))config.instructor.name=value(f,"instructor_name",100);
   config.instructor.heading=value(f,"instructor_heading",100);
   config.instructor.biography=value(f,"biography",1800);
   config.instructor.profileNoteHeading=value(f,"profile_note_heading",120);
@@ -37,7 +38,7 @@ export async function POST(request:NextRequest,context:{params:Promise<{id:strin
   config.teachingAreas.areas=lines(value(f,"areas",1200)).slice(0,40);
   config.teachingAreas.schedule=value(f,"teaching_schedule",600);
   config.reviews.heading=value(f,"reviews_heading",100);
-  config.reviews.items=lines(value(f,"reviews",2500)).slice(0,12).map((line,i)=>{const [quote,attribution,theme,milestone]=line.split("|").map(x=>x.trim());return{id:String(i+1),quote:(quote||"").slice(0,600),attribution:(attribution||"").slice(0,100),theme:theme?.slice(0,60),milestone:milestone?.slice(0,100)}});
+  config.reviews.items=lines(value(f,"reviews",2500)).slice(0,12).map((line,i)=>{const [quote,attribution,theme,milestone,passDate]=line.split("|").map(x=>x.trim());return{id:String(i+1),quote:(quote||"").slice(0,600),attribution:(attribution||"").slice(0,100),theme:theme?.slice(0,60),milestone:milestone?.slice(0,100),passDate:passDate?.slice(0,60)}});
   config.faq.heading=value(f,"faq_heading",100);
   config.faq.items=lines(value(f,"faq",3500)).slice(0,20).map((line,i)=>{const [question,answer]=line.split("|").map(x=>x.trim());return{id:String(i+1),question:(question||"").slice(0,250),answer:(answer||"").slice(0,700)}});
   if(f.has("knowledge_topic")){const topics=f.getAll("knowledge_topic").map(x=>String(x).trim());
@@ -58,6 +59,7 @@ export async function POST(request:NextRequest,context:{params:Promise<{id:strin
   if(f.has("assistant_gaps"))config.assistant.unansweredQuestions=[...new Set(lines(value(f,"assistant_gaps",6000)).slice(0,50).map(x=>x.slice(0,250)))];
   if(f.has("assistant_welcome"))config.assistant.welcomeMessage=value(f,"assistant_welcome",300);
   if(f.has("assistant_fallback"))config.assistant.fallbackMessage=value(f,"assistant_fallback",500)||"I don’t have a confirmed answer to that question. Please use the enquiry form to ask the instructor.";
+  if(f.has("response_time"))config.contact.responseTime=value(f,"response_time",160);
   config.contact.heading=value(f,"contact_heading",100);
   config.contact.description=value(f,"contact_intro",600);
   config.contact.email=value(f,"contact_email",250);
