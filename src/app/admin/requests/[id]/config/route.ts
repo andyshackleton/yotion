@@ -61,6 +61,16 @@ export async function POST(request:NextRequest,context:{params:Promise<{id:strin
   config.contact.heading=value(f,"contact_heading",100);
   config.contact.description=value(f,"contact_intro",600);
   config.contact.email=value(f,"contact_email",250);
+  if(f.has("facebook_url")&&f.has("instagram_url")){
+   const socials={facebook:value(f,"facebook_url",1500),instagram:value(f,"instagram_url",1500)};
+   for(const [platform,link] of Object.entries(socials)){
+    if(!link)continue;
+    let url:URL;
+    try{url=new URL(link)}catch{return back(request,id,"invalid")}
+    if(url.protocol!=="https:"||url.username||url.password||![platform+".com","www."+platform+".com","m."+platform+".com"].includes(url.hostname)||url.pathname==="/")return back(request,id,"invalid");
+   }
+   config.contact.socials=socials;
+  }
   if(!config.hero.headline||!config.contact.email||!config.contact.email.includes("@"))return back(request,id,"invalid");
   const result=await db().rpc("yotion_admin_save_website_config",{p_request_id:id,p_config:config});
   if(result.error||result.data!==true)throw result.error||Error("Save failed");

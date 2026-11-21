@@ -31,7 +31,7 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
  replace('Your road to<br><em>feeling confident.</em>',plainHeadline);
  replace('A calm start. A clear plan. Lessons that move at your pace.',esc(c.hero.description));
  replace('AUTOMATIC DRIVING LESSONS IN LIVERPOOL',esc(c.hero.eyebrow));
- replace('Ask about your first lesson →','Contact Us <span class="cta-arrow">→</span>');
+ replace('Ask about your first lesson →',esc(c.hero.primaryCtaLabel?.trim()||"Contact Us")+' <span class="cta-arrow" aria-hidden="true">→</span>');
  replace('Ask about lessons →','Contact Us');
  replace('Ask a quick question ','Ask');
  replace('</head>','<style>.nav nav .nav-chat{background:var(--teal);color:#fff;border:1px solid var(--teal);border-radius:9px;padding:11px 17px;font-weight:700;cursor:pointer;transition:background .2s ease,transform .2s ease}.nav nav .nav-chat:hover{filter:brightness(.92);transform:translateY(-1px)}.nav nav .nav-cta{background:transparent;color:var(--teal);border:1px solid var(--teal);border-radius:9px;padding:11px 17px;transition:background .2s ease,color .2s ease}.nav nav .nav-cta:hover{background:var(--mint)}</style></head>');
@@ -60,6 +60,17 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
   if(open<0||close<=open)return;
   page=page.slice(0,open)+transform(page.slice(open,close))+page.slice(close);
  };
+ const socialLinks = Object.entries(c.contact.socials||{}).flatMap(([platform,link])=>{
+  if(!link||!["facebook","instagram"].includes(platform))return [];
+  try{
+   const url=new URL(link);
+   if(url.protocol!=="https:"||url.username||url.password||![platform+".com","www."+platform+".com","m."+platform+".com"].includes(url.hostname)||url.pathname==="/")return [];
+   return ['<a href="'+esc(url.href)+'">'+(platform==="facebook"?"Facebook":"Instagram")+'</a>'];
+  }catch{return []}
+ });
+ if(socialLinks.length)replace('</footer>','<div class="wrap" style="padding-block:12px"><nav aria-label="Social profiles" style="display:flex;gap:16px">'+socialLinks.join("")+'</nav></div></footer>');
+ replace("Let's see what<br>could work for you.",esc(c.contact.heading||"Contact us"));
+ replace("Share your area, experience and preferred lesson times. Prepare an enquiry with the useful details together. You can review and copy it before contacting an instructor.",esc(c.contact.description));
  // One layout for every school. Only the content changes.
  updateSection("lessons","instructor",html=>{
   // The Sample's three-card structure is fixed; values come from the school config.
@@ -71,9 +82,9 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
   }).join('');
   const lessonTitle=c.lessons.items.length===1?c.lessons.items[0].title:c.lessons.heading;
   const cards=[
-   '<article class="outcome"><h3>'+esc(lessonTitle)+'</h3>'+(lessonLines||'<p class="sample-info">'+esc(c.lessons.intro)+'</p>')+'</article>',
+   '<article class="outcome"><h3>'+esc(lessonTitle)+'</h3>'+(c.lessons.intro?'<p class="sample-info">'+esc(c.lessons.intro)+'</p>':'')+lessonLines+'</article>',
    '<article class="outcome"><h3>'+esc(c.teachingAreas.heading)+'</h3><p class="sample-info">'+(c.teachingAreas.areas.length?c.teachingAreas.areas.map(esc).join(' · '):'Ask the instructor to confirm coverage.')+'</p><p class="fine">Pickup coverage must be confirmed before booking.</p></article>',
-   '<article class="outcome"><h3>When we teach</h3><p class="sample-info">'+esc(c.teachingAreas.schedule?.trim()||'Teaching days and times to be confirmed.')+'</p><p class="fine">This is not live availability. Please enquire to confirm a suitable time.</p></article>'
+   '<article class="outcome" id="teaching-schedule"><h3>When we teach</h3><p class="sample-info">'+esc(c.teachingAreas.schedule?.trim()||'Teaching days and times to be confirmed.')+'</p><p class="fine">This is not live availability. Please enquire to confirm a suitable time.</p></article>'
   ].join('');
   return html
    .replace(/<div class="outcome-grid">[\s\S]*?<\/div><\/div><\/section>$/,
@@ -114,9 +125,10 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
   }).join('');
   const body=cards||'<p class="stories-empty">Learner stories will appear here once the instructor has supplied genuine reviews.</p>';
   return html
+   .replace(/(<h2 id="stories-heading">)[\s\S]*?<\/h2>/,(_,opening)=>opening+esc(c.reviews.heading||"Learner stories")+"</h2>")
    .replace(/<div class="stories-notice">[\s\S]*?<\/div>/,'')
-   .replace(/<div class="stories-grid">[\s\S]*<\/div><\/div><\/section>\s*$/,
-    '<div class="stories-grid">'+body+'</div></div></section>');
+   .replace(/(<div class="stories-grid">)(?:\s*<article\b[\s\S]*?<\/article>)+/,
+    (_,opening)=>opening+body);
  });
 
  replace("$('#sample-form').onsubmit=", "if ($('#sample-form')) $('#sample-form').onsubmit=");
