@@ -125,7 +125,7 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
   const body=cards||'<p class="stories-empty">Learner stories will appear here once the instructor has supplied genuine reviews.</p>';
   return html
    .replace(/(<h2 id="stories-heading">)[\s\S]*?<\/h2>/,(_,opening)=>opening+esc(c.reviews.heading||"Learner stories")+"</h2>")
-   .replace(/<div class="stories-notice">[\s\S]*?<\/div>/,cards?'<div class="stories-notice"><span class="example-label">LEARNER TESTIMONIALS</span><span>These testimonials are from learners who passed with this instructor.</span></div>':'')
+   .replace(/<div class="stories-notice">[\s\S]*?<\/div>/,cards?'<div class="stories-notice"><span class="example-label">LEARNER TESTIMONIALS</span><span>'+(c.reviews.items.every(item=>item.passDate?.trim())?'These testimonials are from learners who passed with this instructor.':'Read what learners say about their lessons with this instructor.')+'</span></div>':'')
    .replace(/(<div class="stories-grid">)(?:\s*<article\b[\s\S]*?<\/article>)+/,
     (_,opening)=>opening+body);
  });
