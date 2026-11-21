@@ -1,4 +1,4 @@
-import {applySharedWebsitePolish} from "../../lib/yotion-shared-website-polish";
+import {applySharedWebsitePolish,schoolNavigationLinks} from "../../lib/yotion-shared-website-polish";
 import {greenlightOriginalHtml as html} from "../../lib/yotion-greenlight-original";
 // Preserved original Greenlane Driving example template (including theme picker).
 // This is a standalone preview until the tenant template is componentised.
@@ -45,9 +45,7 @@ const showcaseStyles = `<style>
 </style>`;
 
 const schoolNavigation = '<button type="button" class="sample-menu-toggle" aria-expanded="false" aria-controls="sample-school-nav">Menu</button>'
- + '<nav id="sample-school-nav" aria-label="Driving school"><a class="nav-pill" href="#lessons">Lessons &amp; prices</a>'
- + '<a class="nav-pill" href="#areas-covered">Areas covered</a><a class="nav-pill" href="#instructor">Meet your instructor</a>'
- + '<a class="nav-pill" href="#questions">FAQs</a><a class="nav-cta" href="#enquire">Contact Us</a></nav>';
+ + '<nav id="sample-school-nav" aria-label="Driving school">'+schoolNavigationLinks+'</nav>';
 
 const menuScript = `<script>
 (() => {

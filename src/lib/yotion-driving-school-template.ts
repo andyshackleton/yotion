@@ -1,5 +1,5 @@
 import {websiteKnowledge,matchKnowledge} from "./yotion-chat-knowledge";
-import {applySharedWebsitePolish} from "./yotion-shared-website-polish";
+import {applySharedWebsitePolish,schoolNavigationLinks} from "./yotion-shared-website-polish";
 import type {WebsiteConfig} from "./yotion-website-config";
 import {greenlightOriginalHtml} from "./yotion-greenlight-original";
 const esc=(v:unknown)=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]??c));
@@ -42,7 +42,7 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
   : brand;
  replace('Greenlane <span>Driving</span>',colouredName);
  replace('<strong>Greenlane Driving</strong>','<strong>'+brand+'</strong>');
- replace('Meet Greenlane Driving<br><small>and Alex behind the wheel!</small>','Meet '+brand+'<br><small>and '+esc(c.instructor.name||'your instructor')+' behind the wheel!</small>');
+ replace('Meet Greenlane Driving<br><small>and Alex behind the wheel!</small>','Meet '+brand+'<br><small>and '+esc(c.instructor.name||(!options.published?'Alex':'your instructor'))+' behind the wheel!</small>');
  replace('© 2026 Greenlane Driving · Demonstration','© 2026 '+brand+' · Demonstration');
  page=page.replaceAll('>Meet Alex</a>','>About</a>');
  replace('AI-generated example of instructor Alex beside his teal learner car','Illustrative image of a driving instructor and learner car');
@@ -120,24 +120,26 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
   // Retain the approved Sample section even before genuine reviews are supplied.
   const cards=c.reviews.items.map(item=>{
    const initials=item.attribution.trim().split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase();
-   return '<article class="story-card">'+(item.theme?'<span class="story-theme">'+esc(item.theme)+'</span>':'')+'<blockquote>“'+esc(item.quote)+'”</blockquote><div class="story-person"><span class="story-initial" aria-hidden="true">'+esc(initials)+'</span><div><strong>'+esc(item.attribution)+'</strong>'+(item.milestone?'<span class="pass-date">'+esc(item.milestone)+'</span>':'')+'</div></div></article>';
+   return '<article class="story-card">'+(item.theme?'<span class="story-theme">'+esc(item.theme)+'</span>':'')+'<blockquote>“'+esc(item.quote)+'”</blockquote><div class="story-person"><span class="story-initial" aria-hidden="true">'+esc(initials)+'</span><div><strong>'+esc(item.attribution)+'</strong>'+(item.passDate?'<span class="pass-date">Passed · '+esc(item.passDate)+'</span>':item.milestone?'<span class="pass-date">'+esc(item.milestone)+'</span>':'')+'</div></div></article>';
   }).join('');
   const body=cards||'<p class="stories-empty">Learner stories will appear here once the instructor has supplied genuine reviews.</p>';
   return html
    .replace(/(<h2 id="stories-heading">)[\s\S]*?<\/h2>/,(_,opening)=>opening+esc(c.reviews.heading||"Learner stories")+"</h2>")
-   .replace(/<div class="stories-notice">[\s\S]*?<\/div>/,'')
+   .replace(/<div class="stories-notice">[\s\S]*?<\/div>/,cards?'<div class="stories-notice"><span class="example-label">LEARNER TESTIMONIALS</span><span>These testimonials are from learners who passed with this instructor.</span></div>':'')
    .replace(/(<div class="stories-grid">)(?:\s*<article\b[\s\S]*?<\/article>)+/,
     (_,opening)=>opening+body);
  });
 
  replace("$('#sample-form').onsubmit=", "if ($('#sample-form')) $('#sample-form').onsubmit=");
+ replace('The instructor would reply to confirm coverage and availability, discuss your needs and explain the lesson terms before any booking.','The instructor checks pickup coverage and lesson availability, then discusses your needs and explains the lesson terms before booking.');
+ const responseTime=c.contact.responseTime?.trim();
+ replace('<p class="fine">This is a demonstration school. Use fictional details. The form prepares a message in your browser; it does not send it.</p>',
+  '<p class="fine">'+esc(responseTime||'Response times vary with the teaching schedule.')+(!options.published?' This preview keeps your enquiry on this page.':'')+'</p>');
  if(options.published){
   replace('id="sample-form"','id="yotion-live-enquiry" method="post"');
   replace('<button class="btn full">Review my enquiry →</button>','<span hidden><label for="enquiry-website">Leave this blank</label><input id="enquiry-website" tabindex="-1" autocomplete="off"></span><button class="btn full">Send my enquiry</button><p id="yotion-live-enquiry-status" role="status" aria-live="polite"></p>');
   replace('<label class="check"><input type="checkbox" required><span>I understand this demo does not send an enquiry or book a lesson.</span></label>','<label class="check"><input type="checkbox" required><span>I agree to this driving school using my details to respond to my enquiry.</span></label>');
   replace('Prepare an enquiry with the useful details together. You can review and copy it before contacting an instructor.','Send an enquiry directly to the driving school.');
-  replace('The instructor would reply','The instructor can reply');
-  replace('<p class="fine">This is a demonstration school. Use fictional details. The form prepares a message in your browser; it does not send it.</p>','');
   replace('placeholder="Demo learner"','autocomplete="name" maxlength="100"');
   replace('placeholder="learner@example.com"','autocomplete="email" maxlength="254"');
   replace('id="pickup" required','id="pickup" maxlength="100" required');
@@ -226,7 +228,7 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
  replace('</head>','<style>.nav nav .nav-chat{background:var(--accent,var(--teal,#087f78))!important;color:#fff!important;border-color:var(--accent,var(--teal,#087f78))!important}.nav nav .nav-cta{color:var(--accent,var(--teal,#087f78))!important;background:transparent!important;border:1px solid currentColor!important}.nav nav .nav-cta:hover{background:rgba(0,0,0,.05)!important}.sample-hero h1 em{color:var(--accent,var(--teal,#087f78))}</style></head>');
  // Customer sites use a real hamburger menu; the Sample remains untouched.
  replace('</nav></div></header>','</nav><button class="site-menu-toggle" type="button" aria-controls="customer-site-nav" aria-expanded="false" aria-label="Open menu"><span></span><span></span><span></span></button></div></header>');
- page=page.replace('<nav><a class="nav-pill"','<nav id="customer-site-nav"><a class="nav-pill"');
+ page=page.replace(/(<header>[\s\S]*?)<nav>[\s\S]*?<\/nav>/,(_,header)=>header+'<nav id="customer-site-nav" aria-label="Driving school">'+schoolNavigationLinks+'</nav>');
  replace('</head>','<style>.nav nav .nav-cta{background:var(--mint)!important;color:var(--teal)!important;border:0!important;font:700 12px "DM Sans",sans-serif!important;padding:11px 14px!important;border-radius:8px!important}.site-menu-toggle{display:none;border:1px solid var(--teal);border-radius:8px;background:#fff;padding:9px;cursor:pointer}.site-menu-toggle span{display:block;width:22px;height:2px;background:var(--teal);margin:4px}@media(max-width:950px){.site-menu-toggle{display:block;margin-left:auto}.nav .wrap{flex-wrap:wrap}.nav nav#customer-site-nav{display:none!important;width:100%;flex-direction:column;align-items:stretch;overflow:visible;white-space:normal;padding:12px 0}.nav nav#customer-site-nav.is-open{display:flex!important}.nav nav#customer-site-nav .nav-pill,.nav nav#customer-site-nav .nav-chat,.nav nav#customer-site-nav .nav-cta{display:flex!important;justify-content:center;width:100%}}</style></head>');
  replace('</body>','<script>(function(){var b=document.querySelector(".site-menu-toggle"),n=document.getElementById("customer-site-nav");if(!b||!n)return;b.addEventListener("click",function(){var open=n.classList.toggle("is-open");b.setAttribute("aria-expanded",String(open));b.setAttribute("aria-label",open?"Close menu":"Open menu")});n.querySelectorAll("a,button").forEach(function(link){link.addEventListener("click",function(){n.classList.remove("is-open");b.setAttribute("aria-expanded","false")})})})();</script></body>');
  replace('</head>','<style>.instructor-placeholder{display:grid;place-items:center;width:160px;height:220px;border-radius:75px 75px 13px 13px;background:var(--mint);color:var(--teal);font:700 80px Georgia,serif}.instructor-copy{min-width:0}</style></head>');
