@@ -14,7 +14,7 @@ export interface WebsiteConfig {
  teachingAreas: {heading:string;areas:string[];schedule?:string;};
  reviews: {heading:string;items:Array<{id:string;quote:string;attribution:string}>;};
  faq: {heading:string;items:Array<{id:string;question:string;answer:string}>;};
- contact: {heading:string;description:string;email:string;phone?:string;whatsapp?:string;};
+ contact: {heading:string;description:string;email:string;phone?:string;whatsapp?:string;socials?:{facebook?:string;instagram?:string};};
  assistant: {enabled:boolean;welcomeMessage?:string;knowledge?:Array<{id:string;topic:string;question:string;answer:string;approved:boolean}>;fallbackMessage?:string;unansweredQuestions?:string[];};
 }
 export const BRAND_COLOURS:readonly BrandColour[]=["green","blue","purple","charcoal","emerald","red","orange","amber","pink","burgundy","navy"];
@@ -24,9 +24,9 @@ export function starterWebsiteConfig(input:{schoolName:string;colour?:string;ema
  return {
   version:1,
   branding:{schoolName:input.schoolName,colour},
-  hero:{eyebrow:lessonLabel.toUpperCase()+" DRIVING LESSONS",headline:"Your road to feeling confident.",description:"A calm start. A clear plan. Lessons that move at your pace.",primaryCtaLabel:"Ask about your first lesson",primaryCtaTarget:"#enquire"},
-  lessons:{heading:"Driving lessons",intro:input.transmission?lessonLabel+" driving lessons. Enquire to discuss availability.":"Replace these example services with the instructor's confirmed lesson options.",items:[]},
-  instructor:{heading:"Meet your instructor",biography:"Example: patient, supportive tuition with a clear plan at your own pace. Replace with the instructor's actual biography."},
+  hero:{eyebrow:lessonLabel.toUpperCase()+" DRIVING LESSONS",headline:"Your road to feeling confident.",description:"A calm start. A clear plan. Lessons that move at your pace.",primaryCtaLabel:"Contact Us",primaryCtaTarget:"#enquire"},
+  lessons:{heading:"Driving lessons",intro:input.transmission?lessonLabel+" driving lessons. Enquire to discuss availability.":"Replace these example services with the instructor's confirmed lesson options.",items:input.transmission?[{id:"starter-lesson",title:lessonLabel+" driving lessons",description:"Enquire to discuss availability."}]:[]},
+  instructor:{heading:"Meet your instructor",biography:"Get in touch to talk through your experience and what you’d like to achieve."},
   teachingAreas:{heading:"Where we teach",areas:input.location?[input.location]:[]},
   reviews:{heading:"What learners say",items:[]},
   faq:{heading:"Common questions",items:[{id:"sample-faq-1",question:"I'm nervous. Can I take things slowly?",answer:"Example answer: lessons can be planned around your confidence and experience. Confirm with the instructor."},{id:"sample-faq-2",question:"Do you teach manual?",answer:input.transmission?lessonLabel+" driving lessons are offered. Enquire to discuss availability.":"Example answer: this template is for automatic lessons. Confirm the instructor's actual transmission options."}]},
