@@ -7,6 +7,7 @@ const esc=(v:unknown)=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&l
  * Personalisation is deliberately narrow until every section has a tested mapping. */
 export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:boolean}):string{
  const brand=esc(c.branding.schoolName);
+ const instructorName=c.instructor.name?.trim()||(!options.published?"Alex":"your instructor");
  let page=greenlightOriginalHtml;
  // Remove the public example's theme switcher, which rewrites the school and logo on load.
  page=page.replace(/<script>\(\(\)=>\{'use strict';const themes=[\s\S]*?<\/script>/,"");
@@ -42,9 +43,17 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
   : brand;
  replace('Greenlane <span>Driving</span>',colouredName);
  replace('<strong>Greenlane Driving</strong>','<strong>'+brand+'</strong>');
- replace('Meet Greenlane Driving<br><small>and Alex behind the wheel!</small>','Meet '+brand+'<br><small>and '+esc(c.instructor.name||(!options.published?'Alex':'your instructor'))+' behind the wheel!</small>');
+ replace('Meet Greenlane Driving<br><small>and Alex behind the wheel!</small>','Meet '+brand+'<br><small>and '+esc(instructorName)+' behind the wheel!</small>');
  replace('© 2026 Greenlane Driving · Demonstration','© 2026 '+brand+' · Demonstration');
- page=page.replaceAll('>Meet Alex</a>','>About</a>');
+ replace('Tell Alex what would help you feel comfortable.','Tell '+esc(instructorName)+' what would help you feel comfortable.');
+ replace('>Prices & coverage</a>','>Lessons &amp; prices</a>');
+ replace('>Meet Alex</a>','>Your instructor</a>');
+ page=page.replaceAll('>Meet Alex</a>','>Your instructor</a>');
+ replace('>Prepare an enquiry</a>','>Contact Us</a>');
+ replace('>Common questions</a>','>FAQs</a>');
+ replace('<a href="#questions">Lesson terms</a>','');
+ replace('<a href="#lessons">Availability information</a>','');
+ replace('<h2>Before you book</h2>','<h2>Page navigation</h2>');
  replace('AI-generated example of instructor Alex beside his teal learner car','Illustrative image of a driving instructor and learner car');
  replace('Alex and his learner car · AI-generated example image','AI-generated example image');
 
@@ -120,11 +129,11 @@ export function renderDrivingSchoolWebsite(c:WebsiteConfig,options:{published:bo
   // Retain the approved Sample section even before genuine reviews are supplied.
   const cards=c.reviews.items.map(item=>{
    const initials=item.attribution.trim().split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase();
-   return '<article class="story-card">'+(item.theme?'<span class="story-theme">'+esc(item.theme)+'</span>':'')+'<blockquote>“'+esc(item.quote)+'”</blockquote><div class="story-person"><span class="story-initial" aria-hidden="true">'+esc(initials)+'</span><div><strong>'+esc(item.attribution)+'</strong>'+(item.passDate?'<span class="pass-date">Passed · '+esc(item.passDate)+'</span>':item.milestone?'<span class="pass-date">'+esc(item.milestone)+'</span>':'')+'</div></div></article>';
+   return '<article class="story-card">'+(item.theme?.trim()?'<span class="story-theme">'+esc(item.theme.trim())+'</span>':'')+'<blockquote>“'+esc(item.quote)+'”</blockquote><div class="story-person"><span class="story-initial" aria-hidden="true">'+esc(initials)+'</span><div><strong>'+esc(item.attribution)+'</strong>'+(item.passDate?'<span class="pass-date">Passed · '+esc(item.passDate)+'</span>':item.milestone?'<span class="pass-date">'+esc(item.milestone)+'</span>':'')+'</div></div></article>';
   }).join('');
   const body=cards||'<p class="stories-empty">Learner stories will appear here once the instructor has supplied genuine reviews.</p>';
   return html
-   .replace(/(<h2 id="stories-heading">)[\s\S]*?<\/h2>/,(_,opening)=>opening+esc(c.reviews.heading||"Learner stories")+"</h2>")
+   .replace(/(<h2 id="stories-heading">)[\s\S]*?<\/h2>/,(_,opening)=>opening+(c.reviews.heading||"Learner stories").split(/\r?\n/).map(esc).join("<br>")+"</h2>")
    .replace(/<div class="stories-notice">[\s\S]*?<\/div>/,cards?'<div class="stories-notice"><span class="example-label">LEARNER TESTIMONIALS</span><span>'+(c.reviews.items.every(item=>item.passDate?.trim())?'These testimonials are from learners who passed with this instructor.':'Read what learners say about their lessons with this instructor.')+'</span></div>':'')
    .replace(/(<div class="stories-grid">)(?:\s*<article\b[\s\S]*?<\/article>)+/,
     (_,opening)=>opening+body);
