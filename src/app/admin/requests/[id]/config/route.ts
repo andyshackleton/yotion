@@ -37,7 +37,7 @@ export async function POST(request:NextRequest,context:{params:Promise<{id:strin
   config.teachingAreas.areas=lines(value(f,"areas",1200)).slice(0,40);
   config.teachingAreas.schedule=value(f,"teaching_schedule",600);
   config.reviews.heading=value(f,"reviews_heading",100);
-  config.reviews.items=lines(value(f,"reviews",2500)).slice(0,12).map((line,i)=>{const [quote,attribution]=line.split("|").map(x=>x.trim());return{id:String(i+1),quote:(quote||"").slice(0,600),attribution:(attribution||"").slice(0,100)}});
+  config.reviews.items=lines(value(f,"reviews",2500)).slice(0,12).map((line,i)=>{const [quote,attribution,theme,milestone]=line.split("|").map(x=>x.trim());return{id:String(i+1),quote:(quote||"").slice(0,600),attribution:(attribution||"").slice(0,100),theme:theme?.slice(0,60),milestone:milestone?.slice(0,100)}});
   config.faq.heading=value(f,"faq_heading",100);
   config.faq.items=lines(value(f,"faq",3500)).slice(0,20).map((line,i)=>{const [question,answer]=line.split("|").map(x=>x.trim());return{id:String(i+1),question:(question||"").slice(0,250),answer:(answer||"").slice(0,700)}});
   if(f.has("knowledge_topic")){const topics=f.getAll("knowledge_topic").map(x=>String(x).trim());
@@ -62,7 +62,9 @@ export async function POST(request:NextRequest,context:{params:Promise<{id:strin
   config.contact.description=value(f,"contact_intro",600);
   config.contact.email=value(f,"contact_email",250);
   if(f.has("facebook_url")&&f.has("instagram_url")){
-   const socials={facebook:value(f,"facebook_url",1500),instagram:value(f,"instagram_url",1500)};
+   const socials={...config.contact.socials,facebook:value(f,"facebook_url",1500),instagram:value(f,"instagram_url",1500)};
+   if(f.has("youtube_url"))socials.youtube=value(f,"youtube_url",1500);
+   if(f.has("tiktok_url"))socials.tiktok=value(f,"tiktok_url",1500);
    for(const [platform,link] of Object.entries(socials)){
     if(!link)continue;
     let url:URL;
