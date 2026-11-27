@@ -5,7 +5,6 @@ import { sendOrderEmail } from "../../../lib/yotion-order-email";
 import { NextRequest } from "next/server";
 import { isSameOriginPost } from "../../../lib/yotion-admin-csrf";
 import { db } from "../../../lib/yotion-db";
-import { marketingPage } from "../../../lib/yotion-marketing-page";
 
 export const dynamic = "force-dynamic";
 
@@ -21,42 +20,45 @@ const esc = (value: string) => value.replace(/[&<>"']/g, ch => ({
 const setupPath = (token: string) => `/order/setup?key=${encodeURIComponent(token)}`;
 
 function page(body: string, status = 200) {
-  const rendered = marketingPage({
-    title: "Website setup",
-    breadcrumb: "Website setup",
-    body: `<section class="setup">${body}</section>`,
-    metadata: '<meta name="robots" content="noindex,nofollow">',
-    pageStyles: `${customerTypography}.setup{max-width:68rem;margin:3rem auto}
-      .setup form{display:grid;gap:1rem}
-      .setup .brief-section{padding:clamp(1rem,4vw,1.6rem);background:white;border:1px solid var(--line);border-radius:14px}
-      .setup .brief-section h2{margin:0 0 .25rem}.setup .brief-section p{margin:.25rem 0 .9rem}
-      .setup .brief-fields{display:grid;gap:.95rem}.setup .field-help{display:block;color:var(--muted);margin:0 0 .25rem}
-      .setup .brief-hero{background:#203a34;color:white;border-radius:18px;padding:clamp(1.3rem,4vw,2.25rem);margin:0 0 1.25rem}
-      .setup .brief-hero h1{margin:.25rem 0 .55rem}.setup .brief-hero p{color:#e6eee7;max-width:40rem;margin:0}
-      .setup .step-kicker{font-size:.875rem;font-weight:700;margin:0;color:#175e4c}.setup .brief-hero .step-kicker{color:#cfe77a}
-      .setup .brief-layout{display:grid;grid-template-columns:minmax(13rem,.5fr) minmax(0,1.5fr);gap:1rem;align-items:start}
-      .setup .brief-nav{display:grid;gap:.25rem;padding:.65rem;background:#edf3e7;border-radius:14px}
-      .setup .brief-nav p{margin:.25rem .5rem}
-      .setup .brief-nav a{display:flex;align-items:center;gap:.5rem;padding:.45rem .6rem;border-radius:8px;text-decoration:none;color:#203a34;font-size:.94rem}
-      .setup .brief-nav a:hover{text-decoration:underline}.setup .brief-nav a[aria-current]{background:#203a34;color:white}
-      .setup .brief-nav svg{width:20px;height:20px;flex:none}
-      .setup .brief-heading{display:flex;align-items:center;gap:.85rem}.setup .setup-icon{display:grid;place-items:center;width:2.65rem;height:2.65rem;border-radius:10px;background:#edf3e7;color:#175e4c;flex:none}
-      .setup .brief-heading h2{margin:0}.setup .brief-section .section-intro{margin:.6rem 0 1rem}
-      .setup .field-guide{margin:0}.setup .setup-feedback{background:#edf3e7;border-left:4px solid #175e4c;padding:.65rem 1rem}
-      .setup button[hidden]{display:none}.setup .actions{justify-content:flex-end}
-      @media(max-width:720px){.setup .brief-layout{grid-template-columns:1fr}.setup .brief-nav{grid-template-columns:repeat(2,minmax(0,1fr))}.setup .brief-nav p{grid-column:1/-1}.setup .actions{justify-content:flex-start}}
-      .setup .brief-section{scroll-margin-top:1.5rem}.setup .actions{background:var(--paper);padding:.65rem 0}
-      .setup label,.setup legend{display:block;font-weight:650}
-      .setup fieldset{border:1px solid var(--line);border-radius:8px;margin:0}
-      .setup label:has(input[type=radio]){font-weight:400;padding:.25rem 0}
-      .setup input:not([type=radio]),.setup textarea{display:block;width:100%;padding:.65rem;border:1px solid #697a70;border-radius:7px;font:inherit;color:var(--ink)}
-      .setup .actions{display:flex;flex-wrap:wrap;gap:.65rem}.setup button{cursor:pointer}
-      .setup .secondary{background:white;color:var(--green)}.setup .error{color:#8b2017}`,
-  });
-  const headers = new Headers(rendered.headers);
-  headers.set("Cache-Control", "no-store");
-  headers.set("Referrer-Policy", "no-referrer");
-  return new Response(rendered.body, { status, headers });
+  return new Response(`<!doctype html><html lang="en-GB"><head><meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">
+  <title>Website setup | Yotion</title><link rel="icon" href="/yotion-icon.svg"><style>
+    :root{--ink:#172e2b;--green:#175e4c;--line:#dce6dd;--muted:#465d51;--paper:#f6f8f2}
+    *{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:400 16px/1.65 Arial,sans-serif}
+    header{background:white;border-bottom:1px solid var(--line)}header>div,main{max-width:72rem;margin:auto;padding-inline:clamp(1rem,4vw,2.25rem)}
+    header>div{min-height:4.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem}
+    .brand{display:inline-flex;align-items:center;gap:.55rem;font-size:1.35rem;font-weight:700;color:var(--ink);text-decoration:none}
+    a{color:var(--green);text-underline-offset:3px}:focus-visible{outline:3px solid var(--green);outline-offset:3px}
+    main{padding-block:clamp(1.5rem,5vw,3.25rem) 3rem}
+    h1{font-size:clamp(2rem,5vw,3.25rem);line-height:1.08;letter-spacing:-.045em;margin:0}
+    .brief-hero{margin:0 0 1.75rem}.brief-hero p{max-width:43rem;margin:.5rem 0 0;color:var(--muted)}
+    .brief-layout{display:grid;grid-template-columns:minmax(14rem,.56fr) minmax(0,1.44fr);gap:clamp(1rem,3vw,2rem);align-items:start}
+    .brief-nav{display:grid;border:1px solid var(--line);background:#fff;border-radius:12px;padding:.45rem;overflow:hidden}
+    .brief-nav p{font-weight:700;font-size:.875rem;margin:.65rem .85rem;color:var(--muted)}
+    .brief-nav a{display:flex;align-items:center;gap:.7rem;padding:.65rem .75rem;border-left:3px solid transparent;border-radius:5px;text-decoration:none;color:var(--ink);font-size:.94rem}
+    .brief-nav a:hover{background:#f4f7f1}.brief-nav a[aria-current]{background:#eaf2e9;color:var(--green);border-left-color:var(--green);font-weight:700}
+    .brief-nav svg,.setup-icon svg{width:18px;height:18px;flex:none}
+    .brief-layout form{display:grid;gap:1rem;background:#fff;border:1px solid var(--line);border-radius:14px;padding:clamp(1rem,3.4vw,2rem)}
+    .brief-section{scroll-margin-top:1rem}.brief-heading{display:flex;gap:.65rem;align-items:flex-start}.setup-icon{color:var(--green);padding-top:.28rem}
+    .step-kicker{color:var(--green);font-size:.875rem;font-weight:700;margin:0}
+    .brief-heading h2{font-size:clamp(1.4rem,3vw,1.85rem);line-height:1.18;letter-spacing:-.025em;margin:.12rem 0 0}
+    .section-intro{color:var(--muted);margin:.5rem 0 1.2rem;padding-bottom:1rem;border-bottom:1px solid var(--line)}
+    .brief-fields{display:grid;gap:1.1rem}.field-help{display:block;font-size:.9rem;line-height:1.45;color:var(--muted);margin:.15rem 0 .4rem}
+    label,legend{display:block;font-weight:700;font-size:.95rem;margin-bottom:.18rem}
+    input:not([type=radio]),textarea{display:block;width:100%;min-height:44px;padding:.62rem .75rem;border:1px solid #85988b;border-radius:6px;background:white;font:inherit;color:var(--ink)}
+    textarea{min-height:7rem;resize:vertical}
+    fieldset{border:1px solid var(--line);border-radius:7px;margin:0;padding:.65rem .85rem}fieldset p{margin:.45rem 0;color:var(--muted);font-size:.9rem}
+    label:has(input[type=radio]){font-weight:400;padding:.25rem 0;margin:0}
+    .actions{display:flex;flex-wrap:wrap;align-items:center;gap:.65rem;padding-top:1.05rem;border-top:1px solid var(--line)}
+    .actions #brief-next,.actions #brief-submit{margin-left:auto}.report-button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:.55rem .95rem;border:1px solid var(--green);border-radius:7px;background:var(--green);color:#fff;text-decoration:none;cursor:pointer}
+    .report-button:hover{background:#203a34}.report-button.secondary{background:white;color:var(--green);border-color:#a9bfb0}.report-button.secondary:hover{background:#edf3e9}
+    button[hidden]{display:none}.field-guide{margin:.15rem 0 0;color:var(--muted);font-size:.875rem}
+    .setup-feedback{border-left:3px solid var(--green);background:#eaf2e9;padding:.6rem .85rem}
+    @media(max-width:700px){.brief-layout{grid-template-columns:1fr}.brief-nav{grid-template-columns:repeat(2,minmax(0,1fr))}.brief-nav p{grid-column:1/-1}.brief-nav a{gap:.4rem;padding:.52rem .45rem}}
+    ${customerTypography}
+    </style></head><body><header><div><a href="/" class="brand"><img src="/yotion-icon.svg" width="30" height="30" alt="">Yotion</a><a href="mailto:hello@yotion.co.uk">Need help?</a></div></header><main class="setup">${body}</main></body></html>`, {
+      status, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "Referrer-Policy": "no-referrer", "X-Content-Type-Options": "nosniff" },
+    });
 }
 
 const sectionIcons: Record<string, CustomerIcon> = {
@@ -82,16 +84,16 @@ function formPage(token: string, reference: string, values: Record<string, strin
       <p class="section-intro">${section.intro}</p><div class="brief-fields">${section.id === "branding" ? domainChoice : ""}${fields}</div></section>`;
   }).join("");
 
-  return page(`<div class="brief-hero"><p class="step-kicker">Website setup</p><h1>Let’s get your school online</h1>
-    <p>Work through the sections below at your own pace. A few rough notes are enough for us to draft your website copy.</p></div>
+  return page(`<div class="brief-hero"><h1>Website setup</h1>
+    <p>Share the details you’d like on your website. We’ll turn your notes into a draft for you to review.</p></div>
     ${message ? `<p class="setup-feedback" role="${status >= 400 ? "alert" : "status"}">${esc(message)}</p>` : ""}
     <div class="brief-layout" data-step="${esc(initialStep)}">
       <nav class="brief-nav" aria-label="Website setup steps"><p>Your setup steps</p>
         ${briefSections.map(section => `<a href="#section-${section.id}">${customerIcon(sectionIcons[section.id])}<span>${section.title}</span></a>`).join("")}
       </nav>
       <form method="post" action="${setupPath(token)}" novalidate>
-        <p class="field-guide">Fields marked * are needed before you submit. You can save and finish later.</p>
         ${sections}
+        <p class="field-guide">* Required before you submit.</p>
         <input type="hidden" name="step" id="brief-step">
         <div class="actions">
           <button type="button" id="brief-back" class="report-button customer-button secondary" hidden>Back</button>
