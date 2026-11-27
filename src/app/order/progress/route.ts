@@ -20,9 +20,21 @@ function render(body: string, status = 200) {
   header{background:white;border-bottom:1px solid #dfe7da}header div,main{max-width:68rem;margin:auto;padding-inline:clamp(1rem,4vw,2rem)}header div{display:flex;min-height:4.5rem;align-items:center;justify-content:space-between;gap:1rem}
   a{color:#175e4c;text-underline-offset:3px}.brand{display:inline-flex;align-items:center;gap:.55rem;text-decoration:none;font-size:1.35rem;font-weight:700;color:#172e2b}
   main{padding-block:clamp(2rem,6vw,4rem)}h1{font-size:clamp(2.1rem,6vw,3.45rem);line-height:1.05;letter-spacing:-.045em;margin:0}h2{font-size:1.35rem;margin:0 0 .5rem}
-  .reference{color:#465d51;overflow-wrap:anywhere}.current{background:#203a34;color:white;border-radius:16px;padding:1.35rem 1.6rem;margin:1.4rem 0 1rem}.current p{margin:0;color:#e6eee7}
-  .layout{display:grid;grid-template-columns:1fr 1fr;gap:1rem;align-items:start}.card{background:white;border:1px solid #dfe7da;border-radius:16px;padding:clamp(1rem,4vw,1.6rem);min-width:0}
-  .stages,.order-messages{list-style:none;margin:0;padding:0}.stages li,.order-messages li{border-bottom:1px solid #dfe7da;padding:.65rem 0}.stages p,.order-messages p{margin:.2rem 0;color:#465d51}.stages [aria-current]{border-left:3px solid #175e4c;padding-left:.6rem}.stage-state,time{display:block;font-size:.875rem;color:#465d51}.order-messages p{white-space:pre-wrap;overflow-wrap:anywhere}
+  .reference{color:#465d51;overflow-wrap:anywhere}.overview{background:#203a34;color:white;border-radius:18px;padding:clamp(1.15rem,4vw,1.8rem);margin:1.6rem 0 1rem;display:flex;align-items:center;justify-content:space-between;gap:1rem 2rem;flex-wrap:wrap}
+  .overview h2{margin:0}.overview p{margin:.4rem 0 0;color:#e6eee7}.overview .progress-count{color:#172e2b;background:#cfe77a;border-radius:999px;padding:.35rem .8rem;font-size:.875rem;font-weight:700}
+  .layout{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:1rem;align-items:start}.card{background:white;border:1px solid #dfe7da;border-radius:16px;padding:clamp(1rem,4vw,1.6rem);min-width:0}
+  .stages,.order-messages{list-style:none;margin:0;padding:0}.stages{margin-top:1rem}
+  .stage{display:grid;grid-template-columns:2rem minmax(0,1fr);gap:.8rem;position:relative;padding-bottom:1rem}
+  .stage:not(:last-child)::before{content:"";position:absolute;left:calc(1rem - 1px);top:2rem;bottom:0;width:2px;background:#dfe7da}.stage.complete::before{background:#77a18f}
+  .stage:last-child{padding-bottom:0}.marker{width:2rem;height:2rem;border:2px solid #b8c6bd;border-radius:50%;display:grid;place-items:center;color:#465d51;font-size:.875rem;font-weight:700;background:white}
+  .complete .marker{background:#175e4c;color:white;border-color:#175e4c}.active .marker{background:#cfe77a;border-color:#175e4c;color:#172e2b}
+  .stage-body{padding:.38rem .6rem .5rem;border-radius:9px}.active .stage-body{background:#eef3e6}
+  .stage-heading{display:flex;align-items:baseline;justify-content:space-between;gap:.35rem .7rem;flex-wrap:wrap}.stage-heading strong{line-height:1.35}
+  .stage-state{font-size:.8rem;font-weight:700;color:#465d51;background:#f1f3f0;padding:.14rem .48rem;border-radius:999px}
+  .complete .stage-state{color:#175e4c;background:#e9f3eb}.active .stage-state{color:#172e2b;background:#dcea9c}
+  .stage-body p,.order-messages p{margin:.3rem 0 0;color:#465d51}.stage-body p{font-size:.92rem}
+  .order-messages li{border-bottom:1px solid #dfe7da;padding:.65rem 0}.order-messages p{white-space:pre-wrap;overflow-wrap:anywhere}.order-messages time{display:block;font-size:.875rem;color:#465d51}
+  .message-intro{margin:.25rem 0 .8rem;color:#465d51}.order-ref{margin-top:1.15rem;color:#465d51;font-size:.9rem}.order-ref summary{cursor:pointer;width:fit-content}
   form{margin-top:1rem}label{font-weight:700}textarea{display:block;width:100%;margin:.3rem 0 .75rem;resize:vertical;min-height:6rem;border:1px solid #697a70;border-radius:8px;padding:.65rem;font:inherit}
   button,.button{display:inline-block;border:1px solid #172e2b;border-radius:8px;background:#cfe77a;color:#172e2b;padding:.65rem 1rem;font:inherit;cursor:pointer;text-decoration:none}button:hover,.button:hover{background:#e2f39f}:focus-visible{outline:3px solid #175e4c;outline-offset:4px}
   @media(max-width:690px){.layout{grid-template-columns:1fr}}
@@ -48,18 +60,32 @@ export async function GET(request: NextRequest) {
     if (!order) return unavailable();
     if (!order.submitted_at) return render(`<h1>Your website setup</h1><p>Send us your website details to get started.</p><a class="button" href="/order/setup?key=${token}">Continue website setup</a>`);
 
-    const current = order.progress_status === "review" ? 3 : order.progress_status === "preparing" ? 2 : 1;
-    const timeline = stages.map(([title, detail], index) => `<li${index === current ? ' aria-current="step"' : ""}>
-      <span class="stage-state">${index < current ? "Complete" : index === current ? "Current step" : "Upcoming"}</span><strong>${title}</strong><p>${detail}</p></li>`).join("");
+    const active = order.progress_status === "review" ? 3 : order.progress_status === "preparing" ? 2 : null;
+    const completed = active ?? 2;
+    const next = active === 3
+      ? "Check Messages for your review instructions. You can reply here with any changes you’d like."
+      : active === 2
+        ? "We’re building your site. We’ll contact you here if we need anything else."
+        : "We have everything you submitted. We’ll review your details before we start building.";
+    const timeline = stages.map(([title, detail], index) => {
+      const done = index < completed;
+      const now = index === active;
+      const state = done ? "Complete" : now ? "In progress" : index === completed && active === null ? "Up next" : "Upcoming";
+      return `<li class="stage ${done ? "complete" : now ? "active" : "upcoming"}"${now ? ' aria-current="step"' : ""}>
+        <span class="marker" aria-hidden="true">${done ? "✓" : index + 1}</span><div class="stage-body">
+        <div class="stage-heading"><strong>${title}</strong><span class="stage-state">${state}</span></div>
+        ${!done && (now || index === completed) ? `<p>${detail}</p>` : ""}</div></li>`;
+    }).join("");
     const messages = await orderMessages(token, null);
-    return render(`<h1>Your website progress</h1><p class="reference">${orderPlan(order.plan)} · Order ${esc(order.order_reference)}</p>
-      <section class="current"><h2>${stages[current][0]}</h2><p>${current === 3 ? "Look for review instructions in Messages below. If you need the link, ask us here." : "We’ll let you know if we need anything else from you."}</p></section>
+    return render(`<h1>Your website progress</h1><p class="reference">${orderPlan(order.plan)}</p>
+      <section class="overview"><div><h2>${active === null ? "Website details received" : stages[active][0]}</h2><p>${next}</p></div>
+        <span class="progress-count">${completed} of ${stages.length} steps complete</span></section>
       <div class="layout"><section class="card"><h2>Your launch timeline</h2><ol class="stages">${timeline}</ol></section>
-      <section class="card" id="messages"><h2>Messages</h2><p>Ask us a question or share an update about your website. Replies posted here stay with your order.</p>
+      <section class="card" id="messages"><h2>Messages</h2><p class="message-intro">Your conversation with Yotion about this order.</p>
         ${request.nextUrl.searchParams.has("sent") ? '<p role="status">Message sent.</p>' : ""}
         ${renderOrderMessages(messages,"You")}
         <form method="post" action="/order/progress?key=${token}"><label for="message">Message to Yotion</label><textarea id="message" name="message" maxlength="2000" required></textarea><button type="submit">Send message</button></form>
-      </section></div>`);
+      </section></div><details class="order-ref"><summary>Order reference</summary><p class="reference">${esc(order.order_reference)}</p></details>`);
   } catch {
     return failed();
   }
