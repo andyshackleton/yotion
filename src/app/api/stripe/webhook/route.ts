@@ -13,7 +13,7 @@ export async function POST(request: Request) {
 
   let event: Stripe.Event;
   try {
-    event = config.stripe.webhooks.constructEvent(await request.text(), signature, config.signingSecret);
+    event = Stripe.webhooks.constructEvent(await request.text(), signature, config.signingSecret);
   } catch {
     return new Response("Invalid Stripe event", { status: 400 });
   }
