@@ -38,6 +38,7 @@ export async function GET(request: Request) {
     return confirmation(`<h1>Thank you for choosing Yotion</h1>
       <p>Your order is confirmed.</p>
       <dl><dt>Order reference</dt><dd>${reference}</dd><dt>Your plan</dt><dd>${plan}</dd><dt>Paid today</dt><dd>${amount}</dd></dl>
+      <form method="post" action="/order/setup"><input type="hidden" name="session" value="${id}"><button class="report-button" type="submit">Start my website setup</button></form>
       <h2>What happens next</h2>
       <p>We’ll need your school details, lesson information and branding to prepare your website. You’ll review it before it goes live.</p>
       <p>Already own a domain? Have its web address to hand. If you still need one, register it in your own name before launch.</p>`);
