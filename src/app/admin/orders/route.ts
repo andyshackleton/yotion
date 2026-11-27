@@ -1,3 +1,4 @@
+import { itinerarySteps, itineraryTasks, readItinerary, taskOwner, taskStatus } from "../../../lib/yotion-order-itinerary";
 import { briefSections } from "../../../lib/yotion-website-brief";
 import { orderMessages, renderOrderMessages } from "../../../lib/yotion-order-messages";
 import { NextRequest, NextResponse } from "next/server";
@@ -5,13 +6,13 @@ import { isAdmin } from "../../../lib/yotion-admin-auth";
 import { isSameOriginPost } from "../../../lib/yotion-admin-csrf";
 import { db } from "../../../lib/yotion-db";
 import { sendOrderEmail } from "../../../lib/yotion-order-email";
-import { escapeOrderHtml as esc, money, orderPlan, orderStatus, orderToken } from "../../../lib/yotion-order-progress";
+import { escapeOrderHtml as esc, money, orderPlan, orderToken } from "../../../lib/yotion-order-progress";
 
 export const dynamic = "force-dynamic";
 
 function render(body: string, status = 200) {
   return new Response(`<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Paid orders | Yotion Admin</title><style>
-  body{margin:0;background:#f7f9f5;color:#172e2b;font:16px/1.5 Arial,sans-serif}main{max-width:62rem;margin:auto;padding:2rem 1rem}a{color:#175e4c}article{background:white;border:1px solid #dfe7da;border-radius:12px;padding:1rem 1.25rem;margin:1rem 0}h2{margin:0;font-size:1.25rem}dd{margin:0 0 .5rem;overflow-wrap:anywhere;white-space:pre-wrap}dt{font-weight:700}form{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin:.75rem 0}button,select{font:inherit;padding:.4rem}.test{background:#eef3e6;padding:.2rem .4rem;border-radius:4px}
+  body{margin:0;background:#f7f9f5;color:#172e2b;font:16px/1.5 Arial,sans-serif}main{max-width:62rem;margin:auto;padding:2rem 1rem}a{color:#175e4c}article{background:white;border:1px solid #dfe7da;border-radius:12px;padding:1rem 1.25rem;margin:1rem 0}h2{margin:0;font-size:1.25rem}dd{margin:0 0 .5rem;overflow-wrap:anywhere;white-space:pre-wrap}dt{font-weight:700}form{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin:.75rem 0}button,select,textarea{font:inherit;padding:.4rem}.task-edit{display:grid;gap:.35rem .65rem;grid-template-columns:minmax(0,15rem) minmax(0,1fr);width:100%;border:1px solid #dfe7da}.task-edit textarea{min-height:4rem}.task-edit button{grid-column:1/-1;justify-self:start}@media(max-width:580px){.task-edit{grid-template-columns:1fr}}.test{background:#eef3e6;padding:.2rem .4rem;border-radius:4px}
   </style></head><body><main><a href="/admin">Back to Yotion Admin</a><h1>Paid orders</h1>${body}</main></body></html>`, {
     status, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "Referrer-Policy": "no-referrer", "X-Frame-Options": "DENY" },
   });
@@ -24,7 +25,7 @@ export async function GET(request: NextRequest) {
   const { data, error } = await db().rpc("yotion_admin_paid_orders");
   if (error) return render("<p>Paid orders could not be loaded.</p>", 503);
   const result = request.nextUrl.searchParams.get("result");
-  const message = result === "message" ? "Reply posted." : result === "updated" ? "Order status updated." : result === "email"
+  const message = result === "message" ? "Reply posted." : result === "updated" ? "Task updated." : result === "email"
     ? "Email retry processed. Check the email status below." : result === "failed" ? "The update did not complete. Please try again." : "";
   const orders = (await Promise.all((data ?? []).map(async (order: Record<string, unknown>) => {
     const reference = esc(order.order_reference);
@@ -38,10 +39,20 @@ export async function GET(request: NextRequest) {
         ? `<dt>Domain plans</dt><dd>${esc(domainLabels[String(details.domain_status)] ?? details.domain_status)}</dd>` : "";
       return items || domain ? `<details><summary>${section.title}</summary><dl>${items}${domain}</dl></details>` : "";
     }).join("");
-    const controls = submitted ? `<form method="post"><input type="hidden" name="reference" value="${reference}">
-      <label for="status-${reference}">Customer progress</label><select id="status-${reference}" name="status">
-      ${Object.entries(orderStatus).map(([key,label]) => `<option value="${key}"${order.progress_status === key ? " selected" : ""}>${label}</option>`).join("")}
-      </select><button name="action" value="status">Update status</button></form>` : "";
+    const itinerary = submitted ? await readItinerary(null, String(order.order_reference)) : null;
+    const controls = itinerary ? `<details><summary>Launch tasks</summary>
+      ${itineraryTasks(itinerary.tasks, order.progress_status).map(task => {
+        const id = `${reference}-${task.task}`;
+        return `<form method="post"><input type="hidden" name="reference" value="${reference}"><input type="hidden" name="task" value="${task.task}">
+          <fieldset class="task-edit"><legend>${task.title}</legend>
+          <label for="status-${id}">Status</label><select id="status-${id}" name="status">
+          ${Object.entries(taskStatus).map(([key,label]) => `<option value="${key}"${task.status === key ? " selected" : ""}>${label}</option>`).join("")}</select>
+          <label for="owner-${id}">Owner</label><select id="owner-${id}" name="owner">
+          ${Object.entries(taskOwner).map(([key,label]) => `<option value="${key}"${task.owner === key ? " selected" : ""}>${key === "customer" ? "Customer" : label}</option>`).join("")}</select>
+          <label for="date-${id}">Planned date and time (UK)</label><input id="date-${id}" name="due" type="datetime-local" value="${esc(task.due_at?.slice(0,16))}">
+          <label for="note-${id}">Customer-facing update or blocker reason</label><textarea id="note-${id}" name="note" maxlength="1500">${esc(task.note)}</textarea>
+          <button name="action" value="task">Save task</button></fieldset></form>`;
+      }).join("")}</details>` : "";
     const retries = `<form method="post"><input type="hidden" name="reference" value="${reference}">
       ${order.welcome_sent_at ? "" : '<button name="action" value="welcome">Retry welcome email</button>'}
       ${submitted && !order.progress_sent_at ? '<button name="action" value="progress">Retry progress email</button>' : ""}</form>`;
@@ -71,11 +82,21 @@ export async function POST(request: NextRequest) {
   let result = "failed";
   try {
     const client = db();
-    if (action === "status") {
-      const { data, error } = await client.rpc("yotion_admin_order_status", {
-        p_reference: reference, p_status: String(form.get("status") ?? ""),
+    if (action === "task") {
+      const task = String(form.get("task") ?? "");
+      const status = String(form.get("status") ?? "");
+      const owner = String(form.get("owner") ?? "");
+      const due = String(form.get("due") ?? "");
+      const note = String(form.get("note") ?? "").trim();
+      if (!Object.hasOwn(itinerarySteps, task) || !Object.hasOwn(taskStatus, status) ||
+          !Object.hasOwn(taskOwner, owner) || (due && !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(due)) ||
+          note.length > 1500 || (status === "blocked" && !note)) {
+        return render('<p>Check the task details. A blocked task needs a customer-facing reason.</p><a href="/admin/orders">Back to paid orders</a>', 400);
+      }
+      const { data, error } = await client.rpc("yotion_update_order_task", {
+        p_reference: reference, p_task: task, p_status: status, p_owner: owner, p_due_at: due || null, p_note: note,
       });
-      if (error || !data) throw new Error("Order status update failed");
+      if (error || !data) throw new Error("Task update failed");
       result = "updated";
     } else if (action === "message") {
       const message = String(form.get("message") ?? "").trim();
