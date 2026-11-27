@@ -1,4 +1,5 @@
 import Stripe from "stripe";
+import { sendOrderEmail } from "../../../../lib/yotion-order-email";
 import { db } from "../../../../lib/yotion-db";
 import { stripeOrderConfiguration } from "../../../../lib/yotion-stripe-order";
 
@@ -43,9 +44,10 @@ export async function POST(request: Request) {
       p_amount: plan.total,
     });
     if (error) throw error;
+    await sendOrderEmail("welcome", { session: session.id });
     return new Response(null, { status: 204 });
   } catch {
-    console.error("Yotion could not record a Stripe order", event.id);
-    return new Response("Order could not be recorded", { status: 503 });
+    console.error("Yotion could not process a Stripe order", event.id);
+    return new Response("Order processing could not be completed", { status: 503 });
   }
 }

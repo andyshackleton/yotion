@@ -1,3 +1,4 @@
+import { sendOrderEmail } from "../../../lib/yotion-order-email";
 import { NextRequest } from "next/server";
 import { isSameOriginPost } from "../../../lib/yotion-admin-csrf";
 import { db } from "../../../lib/yotion-db";
@@ -74,7 +75,20 @@ function formPage(token: string, reference: string, values: Record<string, strin
 
 const unavailable = () => page("<h1>This setup link is unavailable</h1><p>Open your Yotion order confirmation to start or resume setup.</p>", 404);
 const temporarilyUnavailable = () => page("<h1>We couldn’t load website setup</h1><p>Please try again in a moment.</p>", 503);
-const submitted = () => page("<h1>We’ve received your website details</h1><p>We’ll review your information and prepare your website for you to approve before launch.</p>");
+const submitted = (token: string, emailFailed = false) => page(`<h1>We’ve received your website details</h1>
+  <p>We’ll review your information and prepare your website for you to approve before launch.</p>
+  ${emailFailed ? `<p role="alert">Your details are saved. We couldn’t send the confirmation email yet.</p>
+  <form method="post" action="${setupPath(token)}"><button class="report-button" name="action" value="submit">Retry confirmation email</button></form>` : ""}
+  <p><a class="report-button" href="/order/progress?key=${token}">View my website progress</a></p>`);
+async function notifySubmission(token: string) {
+  try {
+    await sendOrderEmail("progress", { token });
+    return redirect(setupPath(token));
+  } catch {
+    console.error("Yotion could not send setup progress email");
+    return submitted(token, true);
+  }
+}
 
 async function readSetup(token: string) {
   const { data, error } = await db().rpc("yotion_read_order_setup", { p_token: token });
@@ -92,7 +106,7 @@ export async function GET(request: NextRequest) {
   try {
     const order = await readSetup(token);
     if (!order) return unavailable();
-    if (order.submitted_at) return submitted();
+    if (order.submitted_at) return submitted(token);
     return formPage(token, order.order_reference, order.details, request.nextUrl.searchParams.has("saved") ? "Progress saved." : "");
   } catch {
     return temporarilyUnavailable();
@@ -129,7 +143,7 @@ export async function POST(request: NextRequest) {
   try {
     const order = await readSetup(token);
     if (!order) return unavailable();
-    if (order.submitted_at) return redirect(setupPath(token));
+    if (order.submitted_at) return action === "submit" ? notifySubmission(token) : redirect(setupPath(token));
     const invalid = fields.some(field => values[field.key].length > field.max) ||
       (Boolean(values.domain_status) && !validDomainChoice) ||
       (action === "submit" && (!validDomainChoice ||
@@ -141,7 +155,7 @@ export async function POST(request: NextRequest) {
       p_token: token, p_details: values, p_submit: action === "submit",
     });
     if (error) return formPage(token, order.order_reference, values, "We couldn’t save your details. Please try again.", 503);
-    return redirect(setupPath(token) + (action === "save" ? "&saved=1" : ""));
+    return action === "submit" ? notifySubmission(token) : redirect(setupPath(token) + "&saved=1");
   } catch {
     return temporarilyUnavailable();
   }
