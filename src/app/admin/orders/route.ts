@@ -1,3 +1,4 @@
+import { orderMessages, renderOrderMessages } from "../../../lib/yotion-order-messages";
 import { NextRequest, NextResponse } from "next/server";
 import { isAdmin } from "../../../lib/yotion-admin-auth";
 import { isSameOriginPost } from "../../../lib/yotion-admin-csrf";
@@ -26,9 +27,9 @@ export async function GET(request: NextRequest) {
   const { data, error } = await db().rpc("yotion_admin_paid_orders");
   if (error) return render("<p>Paid orders could not be loaded.</p>", 503);
   const result = request.nextUrl.searchParams.get("result");
-  const message = result === "updated" ? "Order status updated." : result === "email"
+  const message = result === "message" ? "Reply posted." : result === "updated" ? "Order status updated." : result === "email"
     ? "Email retry processed. Check the email status below." : result === "failed" ? "The update did not complete. Please try again." : "";
-  const orders = (data ?? []).map((order: Record<string, unknown>) => {
+  const orders = (await Promise.all((data ?? []).map(async (order: Record<string, unknown>) => {
     const reference = esc(order.order_reference);
     const test = String(order.stripe_session_id).startsWith("cs_test_");
     const submitted = Boolean(order.submitted_at);
@@ -42,13 +43,19 @@ export async function GET(request: NextRequest) {
     const retries = `<form method="post"><input type="hidden" name="reference" value="${reference}">
       ${order.welcome_sent_at ? "" : '<button name="action" value="welcome">Retry welcome email</button>'}
       ${submitted && !order.progress_sent_at ? '<button name="action" value="progress">Retry progress email</button>' : ""}</form>`;
+    const messages = submitted ? `<details><summary>Order messages</summary>
+      ${renderOrderMessages(await orderMessages(null, String(order.order_reference)), "Customer")}
+      <form method="post"><input type="hidden" name="reference" value="${reference}">
+      <label for="message-${reference}">Reply to customer</label>
+      <textarea id="message-${reference}" name="message" maxlength="2000" required></textarea>
+      <button name="action" value="message">Post reply</button></form></details>` : "";
     return `<article><h2>${esc(details.school || orderPlan(String(order.plan)))}</h2>
       <p>${orderPlan(String(order.plan))} · ${money(Number(order.amount_paid))}${test ? ' · <span class="test">Sandbox</span>' : ""}</p>
       <p>${esc(order.customer_email)} · Order ${reference}</p>
       ${submitted ? `<dl>${summary}</dl>` : "<p>Awaiting website details.</p>"}
       <p>Welcome email: ${order.welcome_sent_at ? "Sent" : "Not sent"}. Progress email: ${order.progress_sent_at ? "Sent" : "Not sent"}.</p>
-      ${controls}${retries}</article>`;
-  }).join("");
+      ${controls}${retries}${messages}</article>`;
+  }))).join("");
   return render(`${message ? `<p role="status">${message}</p>` : ""}${orders || "<p>No paid orders yet.</p>"}`);
 }
 
@@ -68,6 +75,11 @@ export async function POST(request: NextRequest) {
       });
       if (error || !data) throw new Error("Order status update failed");
       result = "updated";
+    } else if (action === "message") {
+      const message = String(form.get("message") ?? "").trim();
+      if (!message || message.length > 2000) return render("<p>Enter a message of 2,000 characters or fewer.</p>", 400);
+      if (!(await orderMessages(null, reference, message)).length) throw new Error("Order unavailable");
+      result = "message";
     } else if (action === "welcome" || action === "progress") {
       const { data, error } = await client.rpc("yotion_admin_paid_orders");
       const order = data?.find((row: { order_reference: string }) => row.order_reference === reference);
