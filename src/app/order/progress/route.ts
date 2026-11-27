@@ -1,3 +1,4 @@
+import { customerTypography } from "../../../lib/yotion-customer-typography";
 import { NextRequest } from "next/server";
 import { db } from "../../../lib/yotion-db";
 import { isSameOriginPost } from "../../../lib/yotion-admin-csrf";
@@ -38,6 +39,8 @@ function render(body: string, status = 200) {
   form{margin-top:1rem}label{font-weight:700}textarea{display:block;width:100%;margin:.3rem 0 .75rem;resize:vertical;min-height:6rem;border:1px solid #697a70;border-radius:8px;padding:.65rem;font:inherit}
   button,.button{display:inline-block;border:1px solid #172e2b;border-radius:8px;background:#cfe77a;color:#172e2b;padding:.65rem 1rem;font:inherit;cursor:pointer;text-decoration:none}button:hover,.button:hover{background:#e2f39f}:focus-visible{outline:3px solid #175e4c;outline-offset:4px}
   @media(max-width:690px){.layout{grid-template-columns:1fr}}
+
+  ${customerTypography}
   </style></head><body><header><div><a class="brand" href="/"><img src="/yotion-icon.svg" width="30" height="30" alt="">Yotion</a><a href="mailto:hello@yotion.co.uk">Need help?</a></div></header><main>${body}</main></body></html>`, {
     status, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "Referrer-Policy": "no-referrer", "X-Content-Type-Options": "nosniff" },
   });
@@ -58,7 +61,7 @@ export async function GET(request: NextRequest) {
   try {
     const order = await readOrder(token);
     if (!order) return unavailable();
-    if (!order.submitted_at) return render(`<h1>Your website setup</h1><p>Send us your website details to get started.</p><a class="button" href="/order/setup?key=${token}">Continue website setup</a>`);
+    if (!order.submitted_at) return render(`<h1>Your website setup</h1><p>Send us your website details to get started.</p><a class="button customer-button" href="/order/setup?key=${token}">Continue website setup</a>`);
 
     const active = order.progress_status === "review" ? 3 : order.progress_status === "preparing" ? 2 : null;
     const completed = active ?? 2;
@@ -84,7 +87,7 @@ export async function GET(request: NextRequest) {
       <section class="card" id="messages"><h2>Messages</h2><p class="message-intro">Your conversation with Yotion about this order.</p>
         ${request.nextUrl.searchParams.has("sent") ? '<p role="status">Message sent.</p>' : ""}
         ${renderOrderMessages(messages,"You")}
-        <form method="post" action="/order/progress?key=${token}"><label for="message">Message to Yotion</label><textarea id="message" name="message" maxlength="2000" required></textarea><button type="submit">Send message</button></form>
+        <form method="post" action="/order/progress?key=${token}"><label for="message">Message to Yotion</label><textarea id="message" name="message" maxlength="2000" required></textarea><button type="submit" class="customer-button">Send message</button></form>
       </section></div><details class="order-ref"><summary>Order reference</summary><p class="reference">${esc(order.order_reference)}</p></details>`);
   } catch {
     return failed();

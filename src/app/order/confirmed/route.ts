@@ -1,3 +1,4 @@
+import { customerTypography } from "../../../lib/yotion-customer-typography";
 import { NextRequest } from "next/server";
 import { isSameOriginPost } from "../../../lib/yotion-admin-csrf";
 import { db } from "../../../lib/yotion-db";
@@ -31,6 +32,8 @@ function confirmation(body: string, status = 200) {
   dl{margin:0}dl div{padding:.7rem 0;border-top:1px solid #e6ece2;display:grid;gap:.1rem}dt{color:#465d51}dd{margin:0;font-weight:700;overflow-wrap:anywhere}.reference{font-size:.85rem;font-weight:400}
   .email{margin:1rem 0 0;color:#465d51}.text-button{border:none;padding:.3rem 0;background:none;font:inherit;color:#175e4c;text-decoration:underline;cursor:pointer}
   @media(max-width:660px){.layout{grid-template-columns:1fr}}
+
+  ${customerTypography}
   </style></head><body><header><div><a class="brand" href="/"><img src="/yotion-icon.svg" width="30" height="30" alt="">Yotion</a><a href="mailto:hello@yotion.co.uk">Need help?</a></div></header>
   <main>${body}</main><footer>Yotion · Managed websites for driving schools</footer></body></html>`, {
     status, headers: {
@@ -69,7 +72,7 @@ export async function GET(request: NextRequest) {
             <li><strong>We prepare your website.</strong> Once you submit your details, you’ll be able to track progress online.</li>
             <li><strong>Review it before launch.</strong> You’ll see your website before it goes live.</li>
           </ol>
-          <form method="post" action="/order/setup"><input type="hidden" name="session" value="${id}"><button class="cta" type="submit">Start my website setup</button></form>
+          <form method="post" action="/order/setup"><input type="hidden" name="session" value="${id}"><button class="cta customer-button" type="submit">Start my website setup</button></form>
         </section>
         <section class="card"><h2>Order summary</h2>
           <dl><div><dt>Plan</dt><dd>${orderPlan(order.plan)}</dd></div><div><dt>Paid today</dt><dd>${money(Number(order.amount_paid))}</dd></div>

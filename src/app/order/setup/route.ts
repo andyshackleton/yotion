@@ -1,3 +1,5 @@
+import { briefFields, briefSections } from "../../../lib/yotion-website-brief";
+import { customerTypography } from "../../../lib/yotion-customer-typography";
 import { sendOrderEmail } from "../../../lib/yotion-order-email";
 import { NextRequest } from "next/server";
 import { isSameOriginPost } from "../../../lib/yotion-admin-csrf";
@@ -7,14 +9,6 @@ import { marketingPage } from "../../../lib/yotion-marketing-page";
 export const dynamic = "force-dynamic";
 
 const tokenPattern = /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i;
-const fields = [
-  { key: "school", label: "Driving school name", max: 140, required: true },
-  { key: "areas", label: "Teaching areas", max: 250, required: true },
-  { key: "lessons", label: "Lesson types and prices", max: 1500, required: true },
-  { key: "domain", label: "Your domain or current website", max: 250, required: false },
-  { key: "branding", label: "Brand colours or a link to your logo", max: 500, required: false },
-  { key: "notes", label: "Anything else we should know?", max: 1500, required: false },
-];
 const domains = [
   ["owned", "I already own a domain"],
   ["register", "I still need to register one"],
@@ -31,8 +25,13 @@ function page(body: string, status = 200) {
     breadcrumb: "Website setup",
     body: `<section class="setup">${body}</section>`,
     metadata: '<meta name="robots" content="noindex,nofollow">',
-    pageStyles: `.setup{max-width:44rem;margin:3rem auto}
-      .setup form{display:grid;gap:1rem;padding:clamp(1rem,4vw,2rem);background:white;border:1px solid var(--line);border-radius:16px}
+    pageStyles: `${customerTypography}.setup{max-width:54rem;margin:3rem auto}
+      .setup form{display:grid;gap:1rem}
+      .setup .brief-section{padding:clamp(1rem,4vw,1.6rem);background:white;border:1px solid var(--line);border-radius:14px}
+      .setup .brief-section h2{margin:0 0 .25rem}.setup .brief-section p{margin:.25rem 0 .9rem}
+      .setup .brief-fields{display:grid;gap:.95rem}.setup .field-help{display:block;color:var(--muted);margin:0 0 .25rem}
+      .setup .brief-nav{display:flex;gap:.5rem 1rem;flex-wrap:wrap;margin:1rem 0 1.5rem}
+      .setup .brief-section{scroll-margin-top:1.5rem}.setup .actions{background:var(--paper);padding:.65rem 0}
       .setup label,.setup legend{display:block;font-weight:650}
       .setup fieldset{border:1px solid var(--line);border-radius:8px;margin:0}
       .setup label:has(input[type=radio]){font-weight:400;padding:.25rem 0}
@@ -47,28 +46,33 @@ function page(body: string, status = 200) {
 }
 
 function formPage(token: string, reference: string, values: Record<string, string>, message = "", status = 200) {
-  const field = (key: string) => {
-    const item = fields.find(field => field.key === key);
-    if (!item) throw new Error("Unknown setup field");
-    const value = esc(values[key] ?? "");
-    const control = item.max > 500
-      ? `<textarea id="${key}" name="${key}" maxlength="${item.max}" rows="3">${value}</textarea>`
-      : `<input id="${key}" name="${key}" maxlength="${item.max}" value="${value}">`;
-    return `<div><label for="${key}">${item.label}${item.required ? " *" : ""}</label>${control}</div>`;
-  };
-  return page(`<h1>Set up your Yotion website</h1>
-    <p>Order ${esc(reference)}. Tell us about your school. You’ll review your website before it goes live.</p>
-    <p>Bookmark this private page so you can return later. Keep the link to yourself.</p>
+  const domainChoice = `<fieldset><legend>Your domain *</legend>
+    ${domains.map(([value,label]) => `<label><input type="radio" name="domain_status" value="${value}"${values.domain_status === value ? " checked" : ""}> ${label}</label>`).join("")}
+    <p>Yotion will connect your domain. You register and renew it separately.</p></fieldset>`;
+  const sections = briefSections.map(section => {
+    const fields = section.fields.map(item => {
+      const value = esc(values[item.key] ?? "");
+      const help = item.help ? `<small class="field-help" id="${item.key}-help">${item.help}</small>` : "";
+      const attributes = `id="brief-${item.key}" name="${item.key}" maxlength="${item.max}"${help ? ` aria-describedby="${item.key}-help"` : ""}`;
+      const control = item.multiline
+        ? `<textarea ${attributes} rows="3">${value}</textarea>`
+        : `<input ${attributes} type="${item.type ?? "text"}" value="${value}">`;
+      return `<div><label for="brief-${item.key}">${item.label}${item.required ? " *" : ""}</label>${help}${control}</div>`;
+    }).join("");
+    return `<section class="brief-section" id="section-${section.id}"><h2>${section.title}</h2>
+      <p>${section.intro}</p><div class="brief-fields">${section.id === "branding" ? domainChoice : ""}${fields}</div></section>`;
+  }).join("");
+
+  return page(`<h1>Tell us about your driving school</h1>
+    <p>Give us the facts and a few rough notes. We’ll turn them into website copy for you to review before launch.</p>
+    <p>Only fields marked * are required to submit. Save a draft at any point and return using the private link in your welcome email.</p>
+    <nav class="brief-nav" aria-label="Website brief sections">${briefSections.map(section => `<a href="#section-${section.id}">${section.title}</a>`).join("")}</nav>
     ${message ? `<p role="${status >= 400 ? "alert" : "status"}" ${status >= 400 ? 'class="error"' : ""}>${esc(message)}</p>` : ""}
-    <form method="post" action="${setupPath(token)}">
-      ${field("school")}${field("areas")}${field("lessons")}
-      <fieldset><legend>Your domain *</legend>
-      ${domains.map(([value,label]) => `<label><input type="radio" name="domain_status" value="${value}"${values.domain_status === value ? " checked" : ""}> ${label}</label>`).join("")}
-      <p>Yotion will connect your domain. You register and renew it separately.</p></fieldset>
-      ${field("domain")}${field("branding")}${field("notes")}
+    <form method="post" action="${setupPath(token)}" novalidate>
+      ${sections}
       <div class="actions">
-      <button class="report-button secondary" name="action" value="save">Save progress</button>
-      <button class="report-button" name="action" value="submit">Submit my website details</button>
+      <button class="report-button customer-button secondary" name="action" value="save">Save progress</button>
+      <button class="report-button customer-button" name="action" value="submit">Submit my website details</button>
       </div>
     </form>`, status);
 }
@@ -78,8 +82,8 @@ const temporarilyUnavailable = () => page("<h1>We couldn’t load website setup<
 const submitted = (token: string, emailFailed = false) => page(`<h1>We’ve received your website details</h1>
   <p>We’ll review your information and prepare your website for you to approve before launch.</p>
   ${emailFailed ? `<p role="alert">Your details are saved. We couldn’t send the confirmation email yet.</p>
-  <form method="post" action="${setupPath(token)}"><button class="report-button" name="action" value="submit">Retry confirmation email</button></form>` : ""}
-  <p><a class="report-button" href="/order/progress?key=${token}">View my website progress</a></p>`);
+  <form method="post" action="${setupPath(token)}"><button class="report-button customer-button" name="action" value="submit">Retry confirmation email</button></form>` : ""}
+  <p><a class="report-button customer-button" href="/order/progress?key=${token}">View my website progress</a></p>`);
 async function notifySubmission(token: string) {
   try {
     await sendOrderEmail("progress", { token });
@@ -119,7 +123,7 @@ export async function POST(request: NextRequest) {
     return new Response("Unsupported form format", { status: 415 });
   }
   const body = await request.text();
-  if (body.length > 24000) return new Response("Form too large", { status: 413 });
+  if (body.length > 100000) return new Response("Form too large", { status: 413 });
   const form = new URLSearchParams(body);
   const token = request.nextUrl.searchParams.get("key");
   if (!token) {
@@ -137,20 +141,21 @@ export async function POST(request: NextRequest) {
   if (!tokenPattern.test(token)) return unavailable();
   const action = form.get("action");
   if (action !== "save" && action !== "submit") return new Response("Invalid action", { status: 400 });
-  const values = Object.fromEntries(fields.map(field => [field.key, (form.get(field.key) ?? "").trim()]));
+  const values = Object.fromEntries(briefFields.map(field => [field.key, (form.get(field.key) ?? "").trim()]));
   values.domain_status = form.get("domain_status") ?? "";
   const validDomainChoice = domains.some(([value]) => value === values.domain_status);
   try {
     const order = await readSetup(token);
     if (!order) return unavailable();
     if (order.submitted_at) return action === "submit" ? notifySubmission(token) : redirect(setupPath(token));
-    const invalid = fields.some(field => values[field.key].length > field.max) ||
+    const invalid = briefFields.some(field => values[field.key].length > field.max) ||
       (Boolean(values.domain_status) && !validDomainChoice) ||
       (action === "submit" && (!validDomainChoice ||
-        fields.some(field => field.required && !values[field.key]) ||
+        (Boolean(values.public_email) && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.public_email)) ||
+        briefFields.some(field => field.required && !values[field.key]) ||
         (values.domain_status === "owned" && !values.domain)));
     if (invalid) return formPage(token, order.order_reference, values,
-      "Check the field lengths and complete the required details, including your domain if you already own one.", 400);
+      "Check the required fields, the public email address if supplied, and your domain if you already own one.", 400);
     const { error } = await db().rpc("yotion_save_order_setup", {
       p_token: token, p_details: values, p_submit: action === "submit",
     });

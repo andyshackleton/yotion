@@ -1,3 +1,4 @@
+import { briefSections } from "../../../lib/yotion-website-brief";
 import { orderMessages, renderOrderMessages } from "../../../lib/yotion-order-messages";
 import { NextRequest, NextResponse } from "next/server";
 import { isAdmin } from "../../../lib/yotion-admin-auth";
@@ -16,10 +17,6 @@ function render(body: string, status = 200) {
   });
 }
 
-const detailLabels = {
-  school: "School name", areas: "Teaching areas", lessons: "Lessons and prices",
-  domain_status: "Domain plans", domain: "Domain", branding: "Branding", notes: "Notes",
-};
 const domainLabels: Record<string, string> = { owned: "Already owns a domain", register: "Needs to register one", help: "Would like help choosing one" };
 
 export async function GET(request: NextRequest) {
@@ -34,8 +31,13 @@ export async function GET(request: NextRequest) {
     const test = String(order.stripe_session_id).startsWith("cs_test_");
     const submitted = Boolean(order.submitted_at);
     const details = (order.details ?? {}) as Record<string, unknown>;
-    const summary = Object.entries(detailLabels).filter(([key]) => details[key]).map(([key, label]) =>
-      `<dt>${label}</dt><dd>${esc(key === "domain_status" ? domainLabels[String(details[key])] ?? details[key] : details[key])}</dd>`).join("");
+    const summary = briefSections.map(section => {
+      const items = section.fields.filter(field => details[field.key]).map(field =>
+        `<dt>${field.label}</dt><dd>${esc(details[field.key])}</dd>`).join("");
+      const domain = section.id === "branding" && details.domain_status
+        ? `<dt>Domain plans</dt><dd>${esc(domainLabels[String(details.domain_status)] ?? details.domain_status)}</dd>` : "";
+      return items || domain ? `<details><summary>${section.title}</summary><dl>${items}${domain}</dl></details>` : "";
+    }).join("");
     const controls = submitted ? `<form method="post"><input type="hidden" name="reference" value="${reference}">
       <label for="status-${reference}">Customer progress</label><select id="status-${reference}" name="status">
       ${Object.entries(orderStatus).map(([key,label]) => `<option value="${key}"${order.progress_status === key ? " selected" : ""}>${label}</option>`).join("")}
@@ -52,7 +54,7 @@ export async function GET(request: NextRequest) {
     return `<article><h2>${esc(details.school || orderPlan(String(order.plan)))}</h2>
       <p>${orderPlan(String(order.plan))} · ${money(Number(order.amount_paid))}${test ? ' · <span class="test">Sandbox</span>' : ""}</p>
       <p>${esc(order.customer_email)} · Order ${reference}</p>
-      ${submitted ? `<dl>${summary}</dl>` : "<p>Awaiting website details.</p>"}
+      ${submitted ? summary : "<p>Awaiting website details.</p>"}
       <p>Welcome email: ${order.welcome_sent_at ? "Sent" : "Not sent"}. Progress email: ${order.progress_sent_at ? "Sent" : "Not sent"}.</p>
       ${controls}${retries}${messages}</article>`;
   }))).join("");
