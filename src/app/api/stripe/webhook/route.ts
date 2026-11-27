@@ -1,0 +1,51 @@
+import Stripe from "stripe";
+import { db } from "../../../../lib/yotion-db";
+import { stripeOrderConfiguration } from "../../../../lib/yotion-stripe-order";
+
+export const runtime = "nodejs";
+
+export async function POST(request: Request) {
+  const config = stripeOrderConfiguration();
+  if (!config) return new Response("Ordering is not configured", { status: 503 });
+
+  const signature = request.headers.get("stripe-signature");
+  if (!signature) return new Response("Missing Stripe signature", { status: 400 });
+
+  let event: Stripe.Event;
+  try {
+    event = config.stripe.webhooks.constructEvent(await request.text(), signature, config.signingSecret);
+  } catch {
+    return new Response("Invalid Stripe event", { status: 400 });
+  }
+
+  if (event.livemode !== config.liveMode) return new Response("Unexpected Stripe mode", { status: 400 });
+  if (event.type !== "checkout.session.completed" && event.type !== "checkout.session.async_payment_succeeded") {
+    return new Response(null, { status: 204 });
+  }
+
+  const session = event.data.object as Stripe.Checkout.Session;
+  const plan = typeof session.payment_link === "string" ? config.plans.get(session.payment_link) : undefined;
+  if (!plan || session.payment_status !== "paid") return new Response(null, { status: 204 });
+
+  const email = session.customer_details?.email;
+  if (session.mode !== "subscription" || session.currency !== "gbp" ||
+      session.amount_total !== plan.total || typeof session.subscription !== "string" || !email) {
+    console.error("Yotion Stripe checkout data did not match its configured plan", event.id);
+    return new Response("Unexpected checkout details", { status: 422 });
+  }
+
+  try {
+    const { error } = await db().rpc("yotion_record_paid_order", {
+      p_session_id: session.id,
+      p_subscription_id: session.subscription,
+      p_email: email,
+      p_plan: plan.name,
+      p_amount: plan.total,
+    });
+    if (error) throw error;
+    return new Response(null, { status: 204 });
+  } catch {
+    console.error("Yotion could not record a Stripe order", event.id);
+    return new Response("Order could not be recorded", { status: 503 });
+  }
+}
