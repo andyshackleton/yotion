@@ -12,7 +12,7 @@ const navigation = [
 const shellStyles = `
   :root{
     --yotion-ink:#172e2b;--yotion-green:#175e4c;--yotion-deep:#203a34;--yotion-accent:#cfe77a;
-    --yotion-muted:#52665b;--yotion-line:#dce6dd;--yotion-paper:#f6f8f3;--yotion-surface:#fff;
+    --yotion-muted:#52665b;--yotion-line:#dce6dd;--yotion-paper:#f2f5ef;--yotion-surface:#fff;
     --yotion-radius:12px;--yotion-shadow:0 1px 2px #172e2b0c,0 3px 10px #172e2b08
   }
   *{box-sizing:border-box}
@@ -21,22 +21,22 @@ const shellStyles = `
   .yotion-admin .admin-skip{position:absolute;top:-8rem;left:1rem;z-index:20;background:white;color:var(--yotion-green);padding:.55rem .9rem}
   .yotion-admin .admin-skip:focus{top:1rem}
   .admin-shell{display:grid;grid-template-columns:15rem minmax(0,1fr);min-height:100vh}
-  .admin-shell .admin-sidebar{position:sticky;top:0;height:100dvh;overflow:auto;background:var(--yotion-deep);color:#f4f8f1;
+  .admin-shell .admin-sidebar{position:sticky;top:0;height:100dvh;overflow:auto;background:#fff;color:var(--yotion-ink);border-right:1px solid var(--yotion-line);
     padding:1.4rem 1rem 1rem;display:flex;flex-direction:column;gap:1.35rem}
   .admin-sidebar .admin-brand,.admin-access .admin-brand{display:inline-flex;align-items:center;gap:.7rem;color:inherit;text-decoration:none;font:700 1.25rem/1.2 Arial,sans-serif;letter-spacing:-.025em}
-  .admin-sidebar .admin-brand{padding:.1rem .55rem 1.25rem;border-bottom:1px solid #ffffff24}
-  .admin-brand img{display:block;flex:none;width:36px;height:36px;background:white;border-radius:9px;padding:5px}
-  .admin-brand small{display:block;margin-top:.18rem;font:400 .8rem/1.3 Arial,sans-serif;letter-spacing:0;color:#d3e4d9}
+  .admin-sidebar .admin-brand{padding:.1rem .55rem 1.25rem;border-bottom:1px solid var(--yotion-line)}
+  .admin-brand img{display:block;flex:none;width:36px;height:36px;background:#eff5e9;border-radius:9px;padding:5px}
+  .admin-brand small{display:block;margin-top:.18rem;font:400 .8rem/1.3 Arial,sans-serif;letter-spacing:0;color:var(--yotion-muted)}
   .admin-sidebar .admin-primary-nav{display:grid;gap:.28rem;margin:0}
   .admin-sidebar .admin-primary-nav a{display:flex;align-items:center;gap:.65rem;min-height:42px;padding:.55rem .7rem;
-    color:#e6f0e8;background:transparent;border:1px solid transparent;text-decoration:none;border-radius:7px;font:400 .92rem/1.35 Arial,sans-serif}
+    color:var(--yotion-muted);background:transparent;border:1px solid transparent;text-decoration:none;border-radius:7px;font:400 .92rem/1.35 Arial,sans-serif}
   .admin-primary-nav svg{width:18px;height:18px;flex:none}
-  .admin-sidebar .admin-primary-nav a[aria-current]{color:#172e2b;background:var(--yotion-accent);font-weight:700}
-  .admin-sidebar .admin-primary-nav a:hover:not([aria-current]){background:#2c4840}
+  .admin-sidebar .admin-primary-nav a[aria-current]{color:var(--yotion-green);background:#eaf2e8;border-color:#d9e7d9;box-shadow:inset 3px 0 var(--yotion-green);font-weight:700}
+  .admin-sidebar .admin-primary-nav a:hover:not([aria-current]){background:#edf3e9}
   .admin-sidebar :focus-visible{outline-color:var(--yotion-accent)}
-  .admin-sidebar .admin-sign-out{margin:auto 0 0;padding-top:.8rem;border-top:1px solid #ffffff24}
-  .admin-sidebar .admin-sign-out button{width:auto;min-height:38px;margin:0;padding:.35rem .65rem;background:transparent;color:#e6f0e8;border:0;border-radius:6px;font:400 .9rem Arial,sans-serif;cursor:pointer}
-  .admin-sidebar .admin-sign-out button:hover{background:#2c4840}
+  .admin-sidebar .admin-sign-out{margin:auto 0 0;padding-top:.8rem;border-top:1px solid var(--yotion-line)}
+  .admin-sidebar .admin-sign-out button{width:auto;min-height:38px;margin:0;padding:.35rem .65rem;background:transparent;color:var(--yotion-muted);border:0;border-radius:6px;font:400 .9rem Arial,sans-serif;cursor:pointer}
+  .admin-sidebar .admin-sign-out button:hover{background:#edf3e9}
   .admin-frame{min-width:0}
   .admin-topbar{display:flex;align-items:center;gap:.55rem;min-height:56px;background:white;border-bottom:1px solid var(--yotion-line);
     padding:.65rem clamp(1.2rem,4vw,3rem);font-size:.85rem;color:var(--yotion-muted)}
@@ -45,6 +45,11 @@ const shellStyles = `
   .admin-shell .admin-content{width:100%;min-width:0;max-width:84rem;margin:0 auto;padding:clamp(1.2rem,4vw,3rem)}
   .admin-content :is(h1,h2,h3){font-family:Arial,sans-serif;font-weight:500;color:inherit}
   .admin-content h1{font-size:clamp(1.9rem,4vw,2.65rem);line-height:1.12;letter-spacing:-.045em;overflow-wrap:anywhere}
+  .admin-content .container>.title{background:var(--yotion-deep);color:white;border-radius:14px;padding:clamp(1rem,3vw,1.65rem);min-height:6.5rem}
+  .admin-content .container>.title .status{background:#e9f3d5;color:var(--yotion-ink);font-weight:700}
+  .admin-content .next-work{background:#e8f1e7;color:var(--yotion-ink);border:1px solid #bfd5c5}
+  .admin-content .next-work p{color:var(--yotion-muted)}.admin-content .next-work p:first-child{color:var(--yotion-green)}
+  .admin-content .next-work .button{background:var(--yotion-green);color:white}
   .admin-content .admin-heading{margin:0 0 .45rem}
   .admin-content :is(.panel,.pane,.card,.publish-panel,.workspace-card){border:1px solid var(--yotion-line);border-radius:var(--yotion-radius);box-shadow:var(--yotion-shadow)}
   .admin-content :is(.panel,.pane,.card,.publish-panel)>h2{letter-spacing:-.022em}
@@ -61,7 +66,7 @@ const shellStyles = `
   .admin-access .admin-access-card{margin-top:1.25rem;background:white;border:1px solid var(--yotion-line);border-radius:var(--yotion-radius);box-shadow:var(--yotion-shadow);padding:clamp(1.1rem,5vw,2rem)}
   @media(max-width:860px){.admin-shell{grid-template-columns:12rem minmax(0,1fr)}}
   @media(max-width:650px){
-    .admin-shell{display:block}.admin-shell .admin-sidebar{position:static;height:auto;overflow:visible;padding:.8rem 1rem;gap:.6rem}
+    .admin-shell{display:block}.admin-shell .admin-sidebar{position:static;height:auto;overflow:visible;padding:.8rem 1rem;gap:.6rem;border-right:0;border-bottom:1px solid var(--yotion-line)}
     .admin-sidebar .admin-brand{padding:0;border:0}.admin-sidebar .admin-primary-nav{display:flex;flex-wrap:wrap}
     .admin-sidebar .admin-sign-out{margin:0;padding:0;border:0}
     .admin-topbar{min-height:42px;padding-inline:1rem}.admin-shell .admin-content{padding:1.15rem 1rem 2rem}
