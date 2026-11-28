@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminShell } from "../../../lib/yotion-admin-shell";
-import { queueMetrics, queueStyles } from "../../../lib/yotion-admin-queue";
+import { queueFilters, queueSearch, queueStyles } from "../../../lib/yotion-admin-queue";
 import { isAdmin } from "../../../lib/yotion-admin-auth";
 import { db } from "../../../lib/yotion-db";
 import { escapeOrderHtml as esc } from "../../../lib/yotion-order-progress";
@@ -21,7 +21,7 @@ function group(status: string): keyof typeof groups {
 }
 
 const styles = queueStyles + `
-  .request-grid{display:grid;grid-template-columns:minmax(13rem,1.45fr) minmax(8rem,1fr) minmax(7rem,.8fr) auto;gap:.7rem 1rem;align-items:center;padding:.85rem 1rem}
+  .request-grid{display:grid;grid-template-columns:minmax(13rem,1.45fr) minmax(8rem,1fr) minmax(7rem,.8fr) auto;gap:.7rem 1rem;align-items:center;padding:.7rem .95rem}
   .request-columns{background:#edf3e9;color:#345048;font-size:.85rem;font-weight:700}
   .request-grid+.request-grid{border-top:1px solid var(--yotion-line)}
   .request-grid strong,.request-grid small{display:block;overflow-wrap:anywhere}.request-grid small,.received{color:var(--yotion-muted);font-size:.87rem}
@@ -69,11 +69,11 @@ export async function GET(request: NextRequest) {
     <div class="queue-header"><div><h1 class="admin-heading">Demo requests</h1><p>Review free demo requests, prepare the draft and send it when it’s ready.</p></div>
       <a class="queue-link" href="${esc(queueUrl(filter))}">Refresh requests</a></div>
     ${error ? '<p class="queue-notice" role="alert">Requests could not be loaded. Please refresh and try again.</p>' :
-      `${queueMetrics(counts.map(item => ({ label:item.label,value:item.value,href:queueUrl(item.key),selected:item.key === filter,attention:item.key === "ready" && item.value > 0 })))}
+      `${queueFilters(counts.map(item => ({ label:item.label,value:item.value,href:queueUrl(item.key),selected:item.key === filter,attention:item.key === "ready" && item.value > 0 })))}
       <section class="queue-panel" aria-label="Demo request queue">
         <div class="queue-tools"><form method="get" action="/admin/demo-requests">
           ${filter === "all" ? "" : `<input type="hidden" name="filter" value="${filter}">`}
-          <label>Search requests<input name="q" type="search" value="${esc(query)}" placeholder="School, contact or email" maxlength="100"></label>
+          ${queueSearch("Search requests", query, "Search by school, contact or email")}
           <button class="queue-link" type="submit">Search</button></form><p class="queue-count">${visible.length} of ${rows.length} requests</p></div>
         ${list ? `<div class="request-grid request-columns" aria-hidden="true"><span>Driving school</span><span>Status</span><span>Received</span><span></span></div>${list}` :
           `<div class="queue-empty"><h2>${rows.length ? "No matching requests" : "No demo requests yet"}</h2>

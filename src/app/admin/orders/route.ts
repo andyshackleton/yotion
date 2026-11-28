@@ -1,4 +1,4 @@
-import { queueMetrics, queueStyles } from "../../../lib/yotion-admin-queue";
+import { queueFilters, queueSearch, queueStyles } from "../../../lib/yotion-admin-queue";
 import { adminShell } from "../../../lib/yotion-admin-shell";
 import { itinerarySteps, itineraryTasks, readItinerary, taskOwner, taskStatus } from "../../../lib/yotion-order-itinerary";
 import { briefSections } from "../../../lib/yotion-website-brief";
@@ -22,8 +22,8 @@ function render(body: string, status = 200) {
   .views a{padding:.45rem 0 .7rem;text-decoration:none;border-bottom:3px solid transparent;font-size:.94rem}
   .views a[aria-current]{font-weight:700;border-color:var(--green)}
   .list{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:white}
-  .row,.columns{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) minmax(0,.95fr) minmax(0,.6fr);gap:.75rem;align-items:center;padding:.9rem 1.15rem}
-  .columns{background:#edf3e9;color:#345048;font-size:.86rem;font-weight:700}
+  .row,.columns{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1.05fr) minmax(5rem,.6fr) minmax(0,1fr) minmax(0,.85fr);gap:.75rem;align-items:center;padding:.7rem .95rem}
+  .columns{font-weight:700}.amount{text-align:right;white-space:nowrap}.row .amount{font-weight:700}
   .order+.order{border-top:1px solid var(--line)}.row{cursor:pointer;list-style:none}
   .row::-webkit-details-marker{display:none}.row:hover,.order[open]>.row{background:#f5f8f1}
   .customer{display:flex;gap:.65rem;align-items:center;min-width:0}.indicator{border:solid var(--green);border-width:0 2px 2px 0;width:7px;height:7px;transform:rotate(-45deg);flex:none;margin-right:.15rem}
@@ -47,8 +47,8 @@ function render(body: string, status = 200) {
   .order-messages{list-style:none;padding:0}.order-messages li{border-bottom:1px solid var(--line);padding:.55rem 0}.order-messages time{display:block;font-size:.85rem;color:var(--muted)}.order-messages p{white-space:pre-wrap;overflow-wrap:anywhere}
   .empty{padding:clamp(1rem,4vw,2rem);background:white;border:1px solid var(--line);border-radius:12px}.empty p{margin:.5rem 0 0;color:var(--muted)}
   .notice{padding:.65rem .85rem;background:#edf3e9;border-left:3px solid var(--green)}
-  @media(max-width:900px){.row,.columns{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) minmax(0,.9fr)}.date{grid-column:2/-1}.columns .date{display:none}}
-  @media(max-width:650px){.row{grid-template-columns:1fr 1fr}.customer{grid-column:1/-1}.date{grid-column:auto}.columns{display:none}.order-content{grid-template-columns:1fr}}
+  @media(max-width:900px){.row,.columns{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) minmax(0,.9fr)}.row .date{grid-column:2/-1}.columns{display:none}.amount{text-align:left}}
+  @media(max-width:650px){.row{grid-template-columns:1fr 1fr}.customer{grid-column:1/-1}.row .date{grid-column:auto}.order-content{grid-template-columns:1fr}}
   `,
   }), {
     status, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "Referrer-Policy": "no-referrer", "X-Frame-Options": "DENY" },
@@ -131,7 +131,7 @@ export async function GET(request: NextRequest) {
     return { priority, group, searchText, html: `<details class="order" id="order-${reference}"${expanded === order.order_reference ? " open" : ""}>
       <summary class="row">
         <span class="customer"><span class="indicator" aria-hidden="true"></span><span><strong>${esc(details.school || "School name pending")}</strong><small>${esc(order.customer_email)}</small></span></span>
-        <span class="plan">${orderPlan(String(order.plan))}<small>${money(Number(order.amount_paid))} paid</small></span>
+        <span class="plan">${orderPlan(String(order.plan))}</span><span class="amount">${money(Number(order.amount_paid))}</span>
         <span><span class="badge ${stageClass}">${stage}</span>${missingEmail ? `<small class="metadata">Email pending</small>` : ""}</span><span class="date"><small>${when}</small></span>
       </summary><div class="order-body">
         <p class="metadata">Order reference · ${reference}</p>
@@ -162,14 +162,14 @@ export async function GET(request: NextRequest) {
       <a href="${esc(queueUrl("all", false, ""))}"${!viewTest ? ' aria-current="page"' : ""}>Orders (${liveCount})</a>
       <a href="${esc(queueUrl("all", true, ""))}"${viewTest ? ' aria-current="page"' : ""}>Test orders (${testCount})</a>
     </nav>
-    ${queueMetrics(metrics.map(item => ({ label:item.label,value:item.value,href:queueUrl(item.key),selected:item.key === filter,attention:item.key==="action"&&item.value>0 })))}
+    ${queueFilters(metrics.map(item => ({ label:item.label,value:item.value,href:queueUrl(item.key),selected:item.key === filter,attention:item.key==="action"&&item.value>0 })))}
     ${message ? `<p class="queue-notice" role="status">${message}</p>` : ""}
     <section class="queue-panel" aria-label="${viewTest ? "Test order queue" : "Customer order queue"}">
       <div class="queue-tools"><form method="get" action="/admin/orders">
         ${viewTest ? '<input type="hidden" name="view" value="test">' : ""}${filter === "all" ? "" : `<input type="hidden" name="filter" value="${filter}">`}
-        <label>Search orders<input name="q" type="search" value="${esc(query)}" placeholder="School, email or order reference" maxlength="100"></label><button type="submit">Search</button>
+        ${queueSearch("Search orders", query, "Search by school, email or order reference")}<button class="queue-link" type="submit">Search</button>
       </form><p class="queue-count">${visible.length} of ${orderRows.length} orders</p></div>
-      ${visible.length ? `<div class="columns" aria-hidden="true"><span>Customer</span><span>Plan</span><span>Launch status</span><span class="date">Order placed</span></div>
+      ${visible.length ? `<div class="columns" aria-hidden="true"><span>Driving school</span><span>Plan</span><span class="amount">Amount paid</span><span>Launch status</span><span class="date">Order placed</span></div>
       ${visible.map(row => row.html).join("")}` : `<div class="queue-empty"><h2>${orderRows.length ? "No matching orders" : viewTest ? "No test orders yet" : "No paid orders yet"}</h2>
       <p>${orderRows.length ? `<a href="${esc(queueUrl("all",viewTest,""))}">Clear search and filters</a>` : viewTest ? "Orders from Stripe test checkouts will appear here." : "Customer purchases appear here as soon as Stripe confirms payment."}</p></div>`}</section>`);
 
