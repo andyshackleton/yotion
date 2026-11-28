@@ -38,7 +38,7 @@ function render(body: string, status = 200) {
   .pane p{margin:.35rem 0 .65rem}.pane .metadata{margin-bottom:.5rem}
   dl{margin:.45rem 0 0}dt{font-size:.88rem;font-weight:700}dd{margin:0 0 .6rem;overflow-wrap:anywhere;white-space:pre-wrap}
   .actions{display:flex;gap:.5rem;flex-wrap:wrap}.actions:empty{display:none}
-  button{padding:.45rem .75rem;border:1px solid var(--green);border-radius:6px;color:white;background:var(--green);font:400 15px Arial,sans-serif}
+  button{padding:.45rem .75rem;border:1px solid var(--green);border-radius:6px;color:white;background:var(--green);font:400 15px var(--yotion-font)}
   button:hover{filter:brightness(.93)}
   .task-edit,.reply{display:grid;gap:.4rem;margin:.65rem 0}.task-edit{border:1px solid var(--line);border-radius:6px}
   .task-edit legend{font-weight:700}.task-edit button,.reply button{justify-self:start;margin-top:.25rem}
