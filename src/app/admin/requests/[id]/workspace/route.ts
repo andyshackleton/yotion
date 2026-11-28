@@ -16,13 +16,38 @@ export async function GET(request:NextRequest,context:{params:Promise<{id:string
  const school=String(demo.data?.school_name||record.school||"Customer"),base="/admin/requests/"+id;
  const cfg=isWebsiteConfig(demo.data?.config)?demo.data.config:null;
  const knowledge: Array<{approved:boolean}>=cfg?.assistant.knowledge||[];
- const tasks=[
-  {name:"School identity and branding",detail:"Name, website slug and brand colour",href:base+"?legacy=1",ready:!!demo.data},
-  {name:"Website content",detail:"Lessons, instructor, teaching areas and contact",href:base+"/website",ready:!!cfg},
-  {name:"Knowledge base",detail:knowledge.length+" knowledge entries · "+knowledge.filter(x=>x.approved).length+" approved",href:base+"/knowledge",ready:knowledge.some(x=>x.approved)},
-  {name:"Preview website",detail:"Check the website before publishing",href:base+"/preview",ready:demo.data?.status==="published"},
-  {name:"Publish and send",detail:"Review readiness and deliver the customer demo",href:base+"/publishing",ready:String(record.status)==="sent"||String(record.status)==="converted"}
- ];
- const body='<div class="grid"><div><section class="panel"><h2>Website preparation</h2><p class="muted">Work through the customer setup and review each stage before delivery.</p>'+tasks.map(t=>'<a class="task" href="'+t.href+'"><span><strong>'+esc(t.name)+'</strong><small>'+esc(t.detail)+'</small></span><span class="status">'+(t.ready?"Configured":"To review")+'</span></a>').join("")+'</section><section class="panel" style="margin-top:20px"><h2>Recent activity</h2>'+(events.length?events.slice(0,5).map(e=>'<div class="activity"><strong>'+esc(String(e.status||"Update"))+'</strong><small>'+esc(displayDate(e.created_at))+'</small>'+(e.note?'<div>'+esc(e.note)+'</div>':"")+'</div>').join(""):'<p class="muted">No activity recorded yet.</p>')+'</section></div><aside><section class="panel"><h2>Submitted request</h2><dl class="meta"><dt>Contact</dt><dd>'+esc(record.name||"Not supplied")+'</dd><dt>Email</dt><dd>'+esc(record.email||"Not supplied")+'</dd><dt>Teaching area</dt><dd>'+esc(record.postcode||"Not supplied")+'</dd><dt>Existing website</dt><dd>'+esc(record.current_website||"Not supplied")+'</dd><dt>Preferred colour</dt><dd>'+esc(record.brand_colour||record.preferred_brand_colour||(cfg?.branding.colour||demo.data?.theme ? (cfg?.branding.colour||demo.data?.theme)+" (current draft)" : "Not supplied"))+'</dd><dt>Submitted notes</dt><dd style="white-space:pre-wrap;overflow-wrap:anywhere">'+esc(record.notes||"Not supplied")+'</dd><dt>Received</dt><dd>'+esc(displayDate(record.created_at))+'</dd></dl><a class="button" href="'+base+'?legacy=1">Manage request</a></section><section class="panel" style="margin-top:20px"><h2>Website</h2><p class="muted">'+esc(demo.data?.slug||"No draft created")+'</p><a href="'+base+'/preview">Open private preview</a></section></aside></div>';
- return new NextResponse(customerWorkspaceShell({id,school,active:"overview",status:String(record.status||"received").replace(/_/g," "),body}),{headers:{"Content-Type":"text/html; charset=utf-8","Cache-Control":"no-store","X-Frame-Options":"DENY"}});
+ const status=String(record.status||"received");
+ const isClosed=["sent","converted","declined","activated"].includes(status);
+ const published=demo.data?.status==="published";
+ const next=!demo.data ? {title:"Create the website draft",description:"Set the school name, private demo address and brand colour.",link:base,label:"Manage request"} :
+   !published ? {title:"Review and prepare the website",description:"Check the lessons, instructor details and contact routes before publishing.",link:base+"/website",label:"Open website editor"} :
+   {title:"Send the private demo link",description:"Review the published demo and deliver it to the customer.",link:base+"/publishing",label:"Open publishing"};
+ const facts=[["Contact",record.name],["Email",record.email],["Teaching area",record.postcode],
+   ["Existing website",record.current_website||record.website],["Preferred colour",record.brand_colour||record.preferred_brand_colour||cfg?.branding.colour]];
+ const body=`<div class="request-overview">
+   ${isClosed ? "" : `<section class="next-work"><div><p>Next action</p><h2>${next.title}</h2><p>${next.description}</p></div><a class="button" href="${next.link}">${next.label}</a></section>`}
+   <div class="grid"><div class="overview-main">
+     <section class="panel"><h2>Request brief</h2>
+       <dl class="brief-grid">${facts.filter(([,value])=>value).map(([label,value])=>`<div><dt>${esc(label)}</dt><dd>${esc(value)}</dd></div>`).join("")}</dl>
+       ${record.notes ? `<div class="notes"><h3>Customer notes</h3><p>${esc(record.notes)}</p></div>` : ""}
+       <a href="${base}">Manage request details</a>
+     </section>
+     <section class="panel"><h2>Recent activity</h2>${events.length ? events.slice(0,5).map(event=>`<div class="activity"><strong>${esc(String(event.status||"Update").replace(/_/g," "))}</strong>
+       <small>${esc(displayDate(event.created_at))}</small>${event.note ? `<div>${esc(event.note)}</div>` : ""}</div>`).join("") : '<p class="muted">No updates recorded.</p>'}</section>
+   </div><aside class="overview-main">
+     <section class="panel"><h2>Demo at a glance</h2><dl class="meta">
+       <dt>Received</dt><dd>${esc(displayDate(record.created_at))}</dd><dt>Website</dt><dd>${published ? "Published demo" : demo.data ? "Private draft" : "Draft pending"}</dd>
+       <dt>Knowledge</dt><dd>${knowledge.filter(item=>item.approved).length} of ${knowledge.length} entries approved</dd></dl>
+       ${demo.data ? `<a class="button" href="${base}/preview" target="_blank" rel="noopener noreferrer">Preview website</a>` : ""}
+     </section>
+   </aside></div></div>`;
+ const styles=`
+  .next-work{display:flex;align-items:center;justify-content:space-between;gap:1rem 2rem;flex-wrap:wrap;background:#203a34;color:white;border-radius:10px;padding:1.15rem 1.35rem;margin-bottom:1rem}
+  .next-work h2{margin:.2rem 0;font-size:1.45rem}.next-work p{margin:0;color:#dfebe2}.next-work p:first-child{font-size:.85rem;font-weight:700;color:#cfe77a}
+  .next-work .button{background:#cfe77a;color:#172e2b}.overview-main{display:grid;gap:1rem;align-content:start;min-width:0}
+  .brief-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(12rem,1fr));gap:.85rem;margin:1rem 0}
+  .brief-grid dt{font-size:.85rem;color:var(--muted)}.brief-grid dd{margin:.1rem 0;font-weight:700;overflow-wrap:anywhere}
+  .notes{border-top:1px solid var(--line);padding:.8rem 0}.notes h3{margin:0;font-size:1rem}.notes p{margin:.35rem 0;white-space:pre-wrap;overflow-wrap:anywhere}
+ `;
+ return new NextResponse(customerWorkspaceShell({id,school,active:"overview",status:status.replace(/_/g," "),body,styles}),{headers:{"Content-Type":"text/html; charset=utf-8","Cache-Control":"no-store","X-Frame-Options":"DENY"}});
 }

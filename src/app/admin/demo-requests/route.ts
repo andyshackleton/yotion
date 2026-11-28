@@ -1,28 +1,83 @@
+import { NextRequest, NextResponse } from "next/server";
 import { adminShell } from "../../../lib/yotion-admin-shell";
-import {NextRequest,NextResponse} from "next/server";
-import {isAdmin} from "../../../lib/yotion-admin-auth";
-import {db} from "../../../lib/yotion-db";
-export const dynamic="force-dynamic";
-const esc=(s:unknown)=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]??c));
-const str=(v:unknown)=>typeof v==="string"?v:String(v??"");
-const pretty=(s:string)=>s.replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase());
-const date=(v:unknown)=>{const d=new Date(str(v));return Number.isNaN(d.getTime())?"—":new Intl.DateTimeFormat("en-GB",{day:"numeric",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit",timeZone:"Europe/London"}).format(d)};
-const statusClass=(v:unknown)=>{const s=str(v).toLowerCase();return /approved|live|complete|paid/.test(s)?"good":/declined|cancelled|rejected/.test(s)?"muted":/received|pending|new/.test(s)?"pending":"progress"};
-const safeFields=["school","name","email","status","created_at","phone","website","location","teaching_areas","transmission","notes","message","lesson_types","updated_at"];
-export async function GET(request:NextRequest){
- if(!await isAdmin())return NextResponse.redirect(new URL("/admin/login",request.url));
- let rows:Record<string,unknown>[]=[];let error="";
- try{const result=await db().rpc("yotion_admin_list_demo_requests");if(result.error)throw result.error;rows=Array.isArray(result.data)?result.data:[]}catch(e){console.error("Yotion admin list failed",e);error="Requests could not be loaded. Please refresh and try again."}
- rows.sort((a,b)=>new Date(str(b.created_at)).getTime()-new Date(str(a.created_at)).getTime());
- const count=(test:(r:Record<string,unknown>)=>boolean)=>rows.filter(test).length;
- const waiting=count(r=>/received|pending|new/i.test(str(r.status)));
- const active=count(r=>/review|progress|prepar|approved/i.test(str(r.status)));
- const completed=count(r=>/ready|sent|complete|live/i.test(str(r.status)));
- const items=rows.map((r,i)=>{const school=esc(r.school||"Unnamed school"),name=esc(r.name||"Not provided"),email=esc(r.email||""),status=esc(pretty(str(r.status||"received"))),when=esc(date(r.created_at)),statusStyle=statusClass(r.status);
- const fields=safeFields.filter(k=>r[k]!==undefined&&r[k]!==null&&str(r[k]).trim()!=="").map(k=>'<div class="detail-field"><dt>'+esc(pretty(k))+'</dt><dd>'+esc(typeof r[k]==="object"?JSON.stringify(r[k]):r[k])+'</dd></div>').join("");
- return '<article class="request" data-search="'+esc([r.school,r.name,r.email,r.status].map(str).join(" ").toLowerCase())+'" data-status="'+esc(str(r.status).toLowerCase())+'"><button class="request-top" type="button" aria-expanded="false" aria-controls="details-'+i+'"><span class="request-mark" aria-hidden="true">'+esc(str(r.school||"?").slice(0,1).toUpperCase())+'</span><span class="request-main"><strong>'+school+'</strong><small>'+name+(email?' · '+email:'')+'</small></span><span class="status '+statusStyle+'">'+status+'</span><span class="request-date">'+when+'</span><span class="chevron" aria-hidden="true">⌄</span></button><div class="request-link-row"><a class="open-request" href="/admin/requests/'+encodeURIComponent(str(r.id))+'">Open request workspace →</a></div><div class="request-details" id="details-'+i+'" hidden><div class="detail-grid">'+fields+'</div><div class="detail-actions">'+(email?'<a class="outline-button" href="mailto:'+encodeURIComponent(str(r.email))+'?subject='+encodeURIComponent("Your Yotion demonstration")+'">Email contact</a>':'')+'<span>Request details are read-only for now. Workflow actions will be added next.</span></div></div></article>'}).join("");
- const html=adminShell({title:"Demo requests",section:"demos",styles:`
- :root{--ink:#172e2b;--green:#175e4c;--soft:#f4f7f0;--line:#dfe7da;--muted:#637368}*{box-sizing:border-box}body{margin:0;background:#f7f9f5;color:var(--ink);font:14px/1.5 Arial,system-ui,sans-serif}button,input{font:inherit}a{color:var(--green)}h1{font-size:clamp(32px,4vw,44px);font-weight:600;letter-spacing:-1.5px;line-height:1.15;margin:0 0 9px}.intro{color:var(--muted);font-size:15px;margin:0 0 32px}.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:37px}.metric{background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px}.metric strong{display:block;font-size:35px;line-height:1.2;letter-spacing:-1px;font-weight:650;margin-top:12px}.metric span{color:var(--muted);font-size:12px;font-weight:600}.metric.pending{background:#ecf3e7;border-color:#d4e4ca}.section-heading{display:flex;justify-content:space-between;gap:12px;align-items:end;flex-wrap:wrap;margin-bottom:18px}.section-heading h2{font-size:24px;letter-spacing:-.5px;font-weight:600;margin:0}.section-heading p{color:var(--muted);margin:5px 0 0}.tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:17px}.tools input,.tools select{border:1px solid #d6e1d3;background:#fff;border-radius:9px;padding:12px 13px;color:var(--ink);min-height:45px}.tools input{flex:1 1 250px;min-width:0}.tools select{flex:0 1 190px}.refresh,.outline-button{display:inline-flex;align-items:center;justify-content:center;min-height:45px;border:1px solid #d6e1d3;background:white;border-radius:9px;padding:10px 15px;color:var(--green);text-decoration:none;font-weight:700;cursor:pointer}.request-list{border:1px solid var(--line);background:#fff;border-radius:16px;overflow:hidden}.request+.request{border-top:1px solid var(--line)}.request-top{display:flex;gap:18px;align-items:center;width:100%;padding:20px 23px;border:0;background:white;text-align:left;cursor:pointer;color:var(--ink)}.request-top:hover,.request-top[aria-expanded=true]{background:#f8faf6}.request-mark{width:43px;height:43px;border-radius:12px;background:#e8f0e2;color:var(--green);font-size:20px;font-weight:750;display:grid;place-items:center;flex:none}.request-main{flex:1;min-width:0}.request-main strong{display:block;font-size:16px}.request-main small{display:block;color:var(--muted);font-size:13px;margin-top:4px;overflow-wrap:anywhere}.status{display:inline-flex;align-items:center;justify-content:center;border-radius:50px;padding:6px 12px;font-size:11px;font-weight:750;text-transform:capitalize;white-space:nowrap;background:#e8eff8;color:#3b6187}.status.pending{background:#fff3d7;color:#8a5c13}.status.good{background:#e4f2e5;color:#2c7041}.status.muted{background:#eee;color:#666}.request-link-row{padding:0 23px 13px 84px;background:#fff}.open-request{color:var(--green);font-size:12px;font-weight:700;text-decoration:underline;white-space:nowrap}.request-date{color:var(--muted);font-size:12px;min-width:150px;text-align:right}.chevron{font-size:23px;color:#6a806e}.request-details{padding:22px 24px 25px 84px;background:#f8faf6;border-top:1px solid var(--line)}.detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:17px 28px}.detail-field dt{font-size:11px;text-transform:uppercase;letter-spacing:.7px;font-weight:700;color:var(--muted)}.detail-field dd{font-size:14px;margin:5px 0 0;overflow-wrap:anywhere;white-space:pre-wrap}.detail-actions{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:25px;border-top:1px solid var(--line);padding-top:20px}.detail-actions span{color:var(--muted);font-size:12px}.empty{padding:50px 25px;text-align:center;color:var(--muted)}.alert{border:1px solid #e6c3bd;background:#fff4f2;padding:16px;border-radius:10px;margin-bottom:18px;color:#873b30}.hint{font-size:12px;color:var(--muted);margin-top:16px}@media(max-width:1100px){.metrics{grid-template-columns:repeat(2,1fr)}.request-date{min-width:120px}}@media(max-width:760px){.metrics{gap:9px}.metric{padding:16px}.metric strong{font-size:28px}.request-top{gap:10px;padding:15px;flex-wrap:wrap}.request-main{flex-basis:calc(100% - 65px)}.request-date{min-width:auto;margin-left:54px;text-align:left}.request-details{padding:20px}.detail-grid{grid-template-columns:1fr}.tools select{flex:1 1 140px}}
- `,body:`<h1 class="admin-heading">Demo requests</h1><p class="intro">Review incoming enquiries and keep track of your personalised demonstrations.</p>${error?'<div class="alert" role="alert">'+esc(error)+'</div>':""}<section class="metrics" aria-label="Request overview"><div class="metric"><span>Total requests</span><strong>${rows.length}</strong></div><div class="metric pending"><span>New / awaiting review</span><strong>${waiting}</strong></div><div class="metric"><span>In progress</span><strong>${active}</strong></div><div class="metric"><span>Ready / completed</span><strong>${completed}</strong></div></section><section aria-labelledby="requests-title"><div class="section-heading"><div><h2 id="requests-title">All enquiries</h2><p>Most recent first · Select a request to view its details.</p></div></div><div class="tools"><input id="search" type="search" placeholder="Search school, contact or email…" aria-label="Search requests"><select id="filter" aria-label="Filter by status"><option value="all">All statuses</option><option value="new">New / received</option><option value="active">In progress</option><option value="complete">Ready / completed</option><option value="other">Other</option></select><a class="refresh" href="/admin/demo-requests">↻ Refresh</a></div><div class="request-list" id="request-list">${items||'<div class="empty">No demo requests have been received yet.</div>'}</div><p id="no-results" class="empty" hidden>No requests match your search or filter.</p><p class="hint">This first version displays the information available from the existing request-list endpoint. Status changes and demonstration actions will be connected next.</p></section>`,script:`(function(){const search=document.getElementById("search"),filter=document.getElementById("filter"),items=[...document.querySelectorAll(".request")],empty=document.getElementById("no-results");function update(){const q=search.value.trim().toLowerCase(),f=filter.value;let shown=0;for(const item of items){const s=item.dataset.status||"";const category=/received|pending|new/.test(s)?"new":/review|progress|prepar|approved/.test(s)?"active":/ready|sent|complete|live/.test(s)?"complete":"other";const visible=item.dataset.search.includes(q)&&(f==="all"||category===f);item.hidden=!visible;if(visible)shown++}empty.hidden=shown!==0||items.length===0}search.addEventListener("input",update);filter.addEventListener("change",update);document.querySelectorAll(".request-top").forEach(button=>button.addEventListener("click",()=>{const expanded=button.getAttribute("aria-expanded")==="true";button.setAttribute("aria-expanded",String(!expanded));document.getElementById(button.getAttribute("aria-controls")).hidden=expanded}));})();`});
- return new NextResponse(html,{headers:{"Content-Type":"text/html; charset=utf-8","Cache-Control":"no-store","X-Frame-Options":"DENY","Referrer-Policy":"no-referrer","X-Content-Type-Options":"nosniff"}});
+import { queueMetrics, queueStyles } from "../../../lib/yotion-admin-queue";
+import { isAdmin } from "../../../lib/yotion-admin-auth";
+import { db } from "../../../lib/yotion-db";
+import { escapeOrderHtml as esc } from "../../../lib/yotion-order-progress";
+
+export const dynamic = "force-dynamic";
+
+const date = new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short", timeZone: "Europe/London" });
+const blank = "—";
+const groups = {
+  new: "New requests", working: "Being prepared", ready: "Ready to send", closed: "Sent or closed",
+} as const;
+
+function group(status: string): keyof typeof groups {
+  if (["sent", "converted", "declined", "activated"].includes(status)) return "closed";
+  if (status === "ready") return "ready";
+  if (["reviewing", "preparing", "approved"].includes(status)) return "working";
+  return "new";
+}
+
+const styles = queueStyles + `
+  .request-grid{display:grid;grid-template-columns:minmax(13rem,1.45fr) minmax(8rem,1fr) minmax(7rem,.8fr) auto;gap:.7rem 1rem;align-items:center;padding:.85rem 1rem}
+  .request-columns{background:#edf3e9;color:#345048;font-size:.85rem;font-weight:700}
+  .request-grid+.request-grid{border-top:1px solid var(--yotion-line)}
+  .request-grid strong,.request-grid small{display:block;overflow-wrap:anywhere}.request-grid small,.received{color:var(--yotion-muted);font-size:.87rem}
+  .request-badge{width:fit-content;padding:.2rem .48rem;border-radius:5px;background:#eaf0e8;color:#274a3b;font-size:.85rem;font-weight:700}
+  .request-badge.new{background:#f6efdc;color:#613d14}.request-badge.ready{background:#dcecd9;color:#224c36}
+  .request-action{text-align:right}.queue-tools button{cursor:pointer}
+  @media(max-width:960px){.request-grid{grid-template-columns:minmax(0,1fr) minmax(0,.7fr)}.request-columns{display:none}.request-action{text-align:left}}
+`;
+
+export async function GET(request: NextRequest) {
+  if (!await isAdmin()) return NextResponse.redirect(new URL("/admin/login", request.url));
+  const { data, error } = await db().rpc("yotion_admin_list_demo_requests");
+  const query = (request.nextUrl.searchParams.get("q") ?? "").trim().slice(0, 100);
+  const requested = request.nextUrl.searchParams.get("filter") ?? "";
+  const filter = Object.hasOwn(groups, requested) ? requested : "all";
+  const queueUrl = (selection: string, search = query) => {
+    const params = new URLSearchParams();
+    if (selection !== "all") params.set("filter", selection);
+    if (search) params.set("q", search);
+    return "/admin/demo-requests" + (params.size ? "?" + params : "");
+  };
+  const rows = ((data ?? []) as Record<string, unknown>[]).map(record => ({
+    record, bucket: group(String(record.status ?? "received").toLowerCase()),
+  }));
+  const priority = { ready: 0, new: 1, working: 2, closed: 3 };
+  const visible = rows.filter(({ record, bucket }) => (filter === "all" || bucket === filter) &&
+    [record.school, record.name, record.email].join(" ").toLowerCase().includes(query.toLowerCase()))
+    .sort((a,b) => priority[a.bucket] - priority[b.bucket] ||
+      new Date(String(b.record.created_at)).getTime() - new Date(String(a.record.created_at)).getTime());
+  const counts = [{ key:"all",label:"All requests",value:rows.length }, ...Object.entries(groups).map(([key,label]) =>
+    ({ key,label,value:rows.filter(row => row.bucket === key).length }))];
+  const list = visible.map(({ record, bucket }) => {
+    const base = "/admin/requests/" + encodeURIComponent(String(record.id));
+    const received = new Date(String(record.created_at ?? ""));
+    const when = Number.isNaN(received.getTime()) ? blank : date.format(received);
+    const rawStatus = String(record.status ?? "received").replace(/_/g, " ");
+    const status = rawStatus.charAt(0).toUpperCase() + rawStatus.slice(1);
+    return `<article class="request-grid">
+      <div><strong>${esc(record.school || "Unnamed school")}</strong><small>${esc([record.name, record.email].filter(Boolean).join(" · ") || blank)}</small></div>
+      <span class="request-badge ${bucket}">${esc(status)}</span><span class="received">${when}</span>
+      <div class="request-action"><a class="queue-link" href="${base}/workspace">Open request</a></div>
+    </article>`;
+  }).join("");
+  const html = adminShell({ title:"Demo requests", section:"demos", styles, body:`
+    <div class="queue-header"><div><h1 class="admin-heading">Demo requests</h1><p>Review free demo requests, prepare the draft and send it when it’s ready.</p></div>
+      <a class="queue-link" href="${esc(queueUrl(filter))}">Refresh requests</a></div>
+    ${error ? '<p class="queue-notice" role="alert">Requests could not be loaded. Please refresh and try again.</p>' :
+      `${queueMetrics(counts.map(item => ({ label:item.label,value:item.value,href:queueUrl(item.key),selected:item.key === filter,attention:item.key === "ready" && item.value > 0 })))}
+      <section class="queue-panel" aria-label="Demo request queue">
+        <div class="queue-tools"><form method="get" action="/admin/demo-requests">
+          ${filter === "all" ? "" : `<input type="hidden" name="filter" value="${filter}">`}
+          <label>Search requests<input name="q" type="search" value="${esc(query)}" placeholder="School, contact or email" maxlength="100"></label>
+          <button class="queue-link" type="submit">Search</button></form><p class="queue-count">${visible.length} of ${rows.length} requests</p></div>
+        ${list ? `<div class="request-grid request-columns" aria-hidden="true"><span>Driving school</span><span>Status</span><span>Received</span><span></span></div>${list}` :
+          `<div class="queue-empty"><h2>${rows.length ? "No matching requests" : "No demo requests yet"}</h2>
+          <p>${rows.length ? '<a href="/admin/demo-requests">Clear search and filters</a>' : "New free demo requests will appear here."}</p></div>`}
+      </section>`}` });
+  return new NextResponse(html,{status:error ? 503 : 200,headers:{"Content-Type":"text/html; charset=utf-8","Cache-Control":"no-store","X-Frame-Options":"DENY","Referrer-Policy":"no-referrer"}});
 }

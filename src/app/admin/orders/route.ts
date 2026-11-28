@@ -1,3 +1,4 @@
+import { queueMetrics, queueStyles } from "../../../lib/yotion-admin-queue";
 import { adminShell } from "../../../lib/yotion-admin-shell";
 import { itinerarySteps, itineraryTasks, readItinerary, taskOwner, taskStatus } from "../../../lib/yotion-order-itinerary";
 import { briefSections } from "../../../lib/yotion-website-brief";
@@ -13,8 +14,8 @@ export const dynamic = "force-dynamic";
 
 function render(body: string, status = 200) {
   return new Response(adminShell({
-    title: "Paid orders", section: "orders", body: `<h1 class="admin-heading">Paid orders</h1>${body}`,
-    styles: `
+    title: "Paid orders", section: "orders", body,
+    styles: `${queueStyles}
   h1,h2,h3{margin:0;line-height:1.2;letter-spacing:-.025em}h2{font-size:1.3rem}h3{font-size:1.1rem}
   .intro{color:var(--muted);margin:.55rem 0 1.7rem}
   .views{display:flex;gap:1.25rem;border-bottom:1px solid var(--line);margin-bottom:1rem}
@@ -61,16 +62,26 @@ const domainLabels: Record<string, string> = { owned: "Already owns a domain", r
 export async function GET(request: NextRequest) {
   if (!await isAdmin()) return NextResponse.redirect(new URL("/admin/login", request.url));
   const { data, error } = await db().rpc("yotion_admin_paid_orders");
-  if (error) return render("<p>Paid orders could not be loaded.</p>", 503);
+  if (error) return render("<h1>Paid orders</h1><p>Paid orders could not be loaded.</p>", 503);
   const result = request.nextUrl.searchParams.get("result");
   const message = result === "message" ? "Reply posted." : result === "updated" ? "Task updated." : result === "email"
     ? "Email retry processed. Check the email status below." : result === "failed" ? "The update did not complete. Please try again." : "";
   const isTest = (order: Record<string, unknown>) => String(order.stripe_session_id).startsWith("cs_test_");
   const viewTest = request.nextUrl.searchParams.get("view") === "test";
   const expanded = request.nextUrl.searchParams.get("order");
+  const query = (request.nextUrl.searchParams.get("q") ?? "").trim().slice(0, 100);
+  const requested = request.nextUrl.searchParams.get("filter");
+  const filter = requested === "action" || requested === "waiting" || requested === "launched" ? requested : "all";
+  const queueUrl = (selection: string, test = viewTest, search = query) => {
+    const params = new URLSearchParams();
+    if (test) params.set("view", "test");
+    if (selection !== "all") params.set("filter", selection);
+    if (search) params.set("q", search);
+    return "/admin/orders" + (params.size ? "?" + params : "");
+  };
   const testCount = (data ?? []).filter(isTest).length;
   const liveCount = (data ?? []).length - testCount;
-  const orders = await Promise.all((data ?? []).filter((order: Record<string, unknown>) => isTest(order) === viewTest)
+  const orderRows = await Promise.all((data ?? []).filter((order: Record<string, unknown>) => isTest(order) === viewTest)
     .map(async (order: Record<string, unknown>) => {
     const reference = esc(order.order_reference);
     const submitted = Boolean(order.submitted_at);
@@ -112,11 +123,16 @@ export async function GET(request: NextRequest) {
       <button name="action" value="message">Post reply</button></form></details>` : "";
     const date = new Date(String(order.created_at ?? ""));
     const when = Number.isNaN(date.getTime()) ? "—" : displayDate.format(date);
-    return `<details class="order" id="order-${reference}"${expanded === order.order_reference ? " open" : ""}>
+    const missingEmail = !order.welcome_sent_at || (submitted && !order.progress_sent_at);
+    const priority = stage === "Blocked" ? 0 : missingEmail || stage === "Details received" ? 1 : stage === "Launched" ? 4 : submitted ? 2 : 3;
+    const group = stage === "Launched" && !missingEmail ? "launched" :
+      priority <= 1 ? "action" : !submitted ? "waiting" : "active";
+    const searchText = [details.school, order.customer_email, order.order_reference, orderPlan(String(order.plan))].join(" ").toLowerCase();
+    return { priority, group, searchText, html: `<details class="order" id="order-${reference}"${expanded === order.order_reference ? " open" : ""}>
       <summary class="row">
         <span class="customer"><span class="indicator" aria-hidden="true"></span><span><strong>${esc(details.school || "School name pending")}</strong><small>${esc(order.customer_email)}</small></span></span>
         <span class="plan">${orderPlan(String(order.plan))}<small>${money(Number(order.amount_paid))} paid</small></span>
-        <span class="badge ${stageClass}">${stage}</span><span class="date"><small>${when}</small></span>
+        <span><span class="badge ${stageClass}">${stage}</span>${missingEmail ? `<small class="metadata">Email pending</small>` : ""}</span><span class="date"><small>${when}</small></span>
       </summary><div class="order-body">
         <p class="metadata">Order reference · ${reference}</p>
         <div class="order-content">
@@ -129,19 +145,33 @@ export async function GET(request: NextRequest) {
             </details>
           </section>
         </div>
-      </div></details>`;
+      </div></details>` };
   }));
-  const liveHref = '/admin/orders';
-  return render(`<p class="intro">${viewTest ? "Orders placed with Stripe test cards. No money was collected." : "Review paid orders and manage each customer’s website launch."}</p>
+  const visible = orderRows.filter(row => (filter === "all" || row.group === filter) && row.searchText.includes(query.toLowerCase()))
+    .sort((a,b) => a.priority - b.priority);
+  const metrics = [
+    { key:"all", label:"All orders", value:orderRows.length },
+    { key:"action", label:"Needs attention", value:orderRows.filter(row => row.group === "action").length },
+    { key:"waiting", label:"Awaiting customer details", value:orderRows.filter(row => row.group === "waiting").length },
+    { key:"launched", label:"Launched", value:orderRows.filter(row => row.group === "launched").length },
+  ];
+  return render(`<div class="queue-header"><div><h1 class="admin-heading">Paid orders</h1>
+      <p>${viewTest ? "Stripe test purchases. No money was collected." : "Manage customer purchases from payment through website launch."}</p></div>
+      <a class="queue-link" href="${esc(queueUrl(filter))}">Refresh orders</a></div>
     <nav class="views" aria-label="Order views">
-      <a href="${liveHref}"${!viewTest ? ' aria-current="page"' : ""}>Orders (${liveCount})</a>
-      <a href="${liveHref}?view=test"${viewTest ? ' aria-current="page"' : ""}>Test orders (${testCount})</a>
+      <a href="${esc(queueUrl("all", false, ""))}"${!viewTest ? ' aria-current="page"' : ""}>Orders (${liveCount})</a>
+      <a href="${esc(queueUrl("all", true, ""))}"${viewTest ? ' aria-current="page"' : ""}>Test orders (${testCount})</a>
     </nav>
-    ${message ? `<p class="notice" role="status">${message}</p>` : ""}
-    ${orders.length ? `<section class="list" aria-label="${viewTest ? "Test orders" : "Customer orders"}">
-      <div class="columns" aria-hidden="true"><span>Customer</span><span>Plan</span><span>Launch status</span><span class="date">Order placed</span></div>
-      ${orders.join("")}</section>` : `<section class="empty"><h2>${viewTest ? "No test orders yet" : "No paid orders yet"}</h2>
-      <p>${viewTest ? "Orders from Stripe test checkouts will appear here." : "New customer purchases will appear here as soon as Stripe confirms payment."}</p></section>`}`);
+    ${queueMetrics(metrics.map(item => ({ label:item.label,value:item.value,href:queueUrl(item.key),selected:item.key === filter,attention:item.key==="action"&&item.value>0 })))}
+    ${message ? `<p class="queue-notice" role="status">${message}</p>` : ""}
+    <section class="queue-panel" aria-label="${viewTest ? "Test order queue" : "Customer order queue"}">
+      <div class="queue-tools"><form method="get" action="/admin/orders">
+        ${viewTest ? '<input type="hidden" name="view" value="test">' : ""}${filter === "all" ? "" : `<input type="hidden" name="filter" value="${filter}">`}
+        <label>Search orders<input name="q" type="search" value="${esc(query)}" placeholder="School, email or order reference" maxlength="100"></label><button type="submit">Search</button>
+      </form><p class="queue-count">${visible.length} of ${orderRows.length} orders</p></div>
+      ${visible.length ? `<div class="columns" aria-hidden="true"><span>Customer</span><span>Plan</span><span>Launch status</span><span class="date">Order placed</span></div>
+      ${visible.map(row => row.html).join("")}` : `<div class="queue-empty"><h2>${orderRows.length ? "No matching orders" : viewTest ? "No test orders yet" : "No paid orders yet"}</h2>
+      <p>${orderRows.length ? `<a href="${esc(queueUrl("all",viewTest,""))}">Clear search and filters</a>` : viewTest ? "Orders from Stripe test checkouts will appear here." : "Customer purchases appear here as soon as Stripe confirms payment."}</p></div>`}</section>`);
 
 }
 
@@ -191,7 +221,10 @@ export async function POST(request: NextRequest) {
   const destination = new URL("/admin/orders", request.url);
   destination.searchParams.set("result", result);
   destination.searchParams.set("order", reference);
-  if (request.nextUrl.searchParams.get("view") === "test") destination.searchParams.set("view", "test");
+  for (const key of ["view", "filter", "q"]) {
+    const value = request.nextUrl.searchParams.get(key);
+    if (value) destination.searchParams.set(key, value.slice(0, 100));
+  }
   destination.hash = "order-" + reference;
   return NextResponse.redirect(destination, 303);
 }
