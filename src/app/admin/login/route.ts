@@ -1,9 +1,14 @@
+import { adminShell } from "../../../lib/yotion-admin-shell";
 import {isSameOriginPost} from "../../../lib/yotion-admin-csrf";
 import {adminBaseUrl} from "../../../lib/yotion-admin-url";
 import {NextRequest,NextResponse} from "next/server";
 import {adminEmail,newAdminToken,isAdmin} from "../../../lib/yotion-admin-auth";
 export const dynamic="force-dynamic";
-const html=(message:string)=>`<!doctype html><html><head><link rel="icon" type="image/svg+xml" href="/yotion-admin-icon.svg"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Yotion admin sign in</title><style>body{background:#f7f9f4;color:#19332c;font:16px/1.5 system-ui}main{max-width:440px;margin:12vh auto;background:white;padding:36px;border-radius:18px}h1{font:normal 40px Georgia,serif}input,button{padding:14px;font:inherit;box-sizing:border-box;width:100%;margin:8px 0}button{background:#175e4c;color:white;border:0;border-radius:8px}</style></head><body><main><h1>Yotion admin</h1><p>Enter your administrator email to receive a secure sign-in link.</p><form method="post"><input name="email" type="email" autocomplete="email" placeholder="Email address" required><button type="submit">Email sign-in link</button></form><p role="status">${message}</p></main></body></html>`;
+const html=(message:string)=>adminShell({title:"Sign in",styles:`
+.admin-access h1{font-size:1.65rem;line-height:1.2;margin:0;font-weight:500}.admin-access p{margin:.6rem 0 1rem}
+.admin-access input,.admin-access button{display:block;width:100%;min-height:44px;padding:.55rem .7rem;border-radius:6px;font:400 15px Arial,sans-serif}
+.admin-access input{border:1px solid #85988b}.admin-access button{margin-top:.75rem;color:white;background:#175e4c;border:1px solid #175e4c;cursor:pointer}
+`,body:`<h1>Sign in</h1><p>Enter your administrator email to receive a secure sign-in link.</p><form method="post"><input aria-label="Administrator email" name="email" type="email" autocomplete="email" placeholder="Email address" required><button type="submit">Email sign-in link</button></form><p role="status">${message}</p>`});
 const response=(message:string,status=200)=>new NextResponse(html(message),{status,headers:{"Content-Type":"text/html; charset=utf-8","Cache-Control":"no-store","X-Frame-Options":"DENY"}});
 export async function GET(request:NextRequest){if(await isAdmin())return NextResponse.redirect(new URL("/admin",request.url));return response("")}
 export async function POST(request:NextRequest){

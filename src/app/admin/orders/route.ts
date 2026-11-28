@@ -1,3 +1,4 @@
+import { adminShell } from "../../../lib/yotion-admin-shell";
 import { itinerarySteps, itineraryTasks, readItinerary, taskOwner, taskStatus } from "../../../lib/yotion-order-itinerary";
 import { briefSections } from "../../../lib/yotion-website-brief";
 import { orderMessages, renderOrderMessages } from "../../../lib/yotion-order-messages";
@@ -11,21 +12,10 @@ import { escapeOrderHtml as esc, money, orderPlan, orderToken } from "../../../l
 export const dynamic = "force-dynamic";
 
 function render(body: string, status = 200) {
-  return new Response(`<!doctype html><html lang="en-GB"><head><meta charset="utf-8">
-  <link rel="icon" href="/yotion-admin-icon.svg"><meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="robots" content="noindex,nofollow"><title>Paid orders | Yotion Admin</title><style>
-  :root{--ink:#172e2b;--green:#175e4c;--paper:#f6f8f3;--line:#dce6dd;--muted:#465d51}
-  *{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:400 16px/1.55 Arial,sans-serif}
-  a{color:var(--green);text-underline-offset:3px}button,input,select,textarea{font:inherit}
-  :focus-visible{outline:3px solid #37836d;outline-offset:3px}button{cursor:pointer}
-  .shell{display:grid;grid-template-columns:14rem minmax(0,1fr);min-height:100vh}
-  .sidebar{background:#203a34;color:#f4f8f1;padding:1.3rem 1rem;display:flex;flex-direction:column;gap:1.5rem}
-  .brand{display:flex;align-items:center;gap:.65rem;font-weight:700;font-size:1.15rem;padding:.25rem .55rem}.brand img{flex:none}
-  .sidebar nav{display:grid;gap:.3rem}.sidebar nav a{padding:.55rem .7rem;color:inherit;text-decoration:none;border-radius:6px}
-  .sidebar nav a[aria-current]{color:#172e2b;background:#cfe77a;font-weight:700}.sidebar nav a:hover{text-decoration:underline}
-  .sidebar form{margin-top:auto}.sidebar button{background:transparent;color:inherit;border:1px solid #afc5b8}
-  main{width:min(100%,80rem);padding:clamp(1.1rem,4vw,3rem);margin:0 auto}
-  h1,h2,h3{font-weight:500;line-height:1.2;letter-spacing:-.025em;margin:0}h1{font-size:clamp(2rem,6vw,3rem)}h2{font-size:1.3rem}h3{font-size:1.1rem}
+  return new Response(adminShell({
+    title: "Paid orders", section: "orders", body: `<h1 class="admin-heading">Paid orders</h1>${body}`,
+    styles: `
+  h1,h2,h3{margin:0;line-height:1.2;letter-spacing:-.025em}h2{font-size:1.3rem}h3{font-size:1.1rem}
   .intro{color:var(--muted);margin:.55rem 0 1.7rem}
   .views{display:flex;gap:1.25rem;border-bottom:1px solid var(--line);margin-bottom:1rem}
   .views a{padding:.45rem 0 .7rem;text-decoration:none;border-bottom:3px solid transparent;font-size:.94rem}
@@ -56,13 +46,10 @@ function render(body: string, status = 200) {
   .order-messages{list-style:none;padding:0}.order-messages li{border-bottom:1px solid var(--line);padding:.55rem 0}.order-messages time{display:block;font-size:.85rem;color:var(--muted)}.order-messages p{white-space:pre-wrap;overflow-wrap:anywhere}
   .empty{padding:clamp(1rem,4vw,2rem);background:white;border:1px solid var(--line);border-radius:12px}.empty p{margin:.5rem 0 0;color:var(--muted)}
   .notice{padding:.65rem .85rem;background:#edf3e9;border-left:3px solid var(--green)}
-  @media(max-width:900px){.shell{grid-template-columns:11rem minmax(0,1fr)}.row,.columns{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) minmax(0,.9fr)}.date{grid-column:2/-1}.columns .date{display:none}}
-  @media(max-width:650px){.shell{display:block}.sidebar{padding:.7rem 1rem;gap:.5rem}.sidebar nav{display:flex;flex-wrap:wrap}.sidebar form{margin-top:0}.row{grid-template-columns:1fr 1fr}.customer{grid-column:1/-1}.date{grid-column:auto}.columns{display:none}.order-content{grid-template-columns:1fr}}
-  </style></head><body><div class="shell"><aside class="sidebar">
-  <div class="brand"><img src="/yotion-admin-icon.svg" alt="" width="28" height="28">Yotion Admin</div>
-  <nav aria-label="Admin navigation"><a href="/admin/orders" aria-current="page">Paid orders</a><a href="/admin/demo-requests">Demo requests</a></nav>
-  <form method="post" action="/admin/logout"><button type="submit">Sign out</button></form>
-  </aside><main><h1>Paid orders</h1>${body}</main></div></body></html>`, {
+  @media(max-width:900px){.row,.columns{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) minmax(0,.9fr)}.date{grid-column:2/-1}.columns .date{display:none}}
+  @media(max-width:650px){.row{grid-template-columns:1fr 1fr}.customer{grid-column:1/-1}.date{grid-column:auto}.columns{display:none}.order-content{grid-template-columns:1fr}}
+  `,
+  }), {
     status, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "Referrer-Policy": "no-referrer", "X-Frame-Options": "DENY" },
   });
 }
