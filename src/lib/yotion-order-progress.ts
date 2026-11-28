@@ -10,3 +10,7 @@ export const money = (pence: number) =>
 export const escapeOrderHtml = (value: unknown) => String(value ?? "").replace(/[&<>"']/g, ch => ({
   "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
 }[ch] ?? ch));
+
+export function orderRenewal(plan: string, initialPayment: number) {
+  return plan === "essential" ? money(initialPayment - 3000) + " a year" : money(initialPayment) + " a month";
+}

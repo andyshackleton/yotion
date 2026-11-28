@@ -1,5 +1,5 @@
 import { db } from "./yotion-db";
-import { money, orderPlan, orderToken } from "./yotion-order-progress";
+import { money, orderPlan, orderRenewal, orderToken } from "./yotion-order-progress";
 
 type EmailKind = "welcome" | "progress";
 
@@ -29,10 +29,9 @@ export async function sendOrderEmail(kind: EmailKind, identifier: { session: str
   if (!key || !from) throw new Error("Order email is not configured");
   const page = kind === "welcome" ? "setup" : "progress";
   const link = `https://yotion.co.uk/order/${page}?key=${encodeURIComponent(order.access_token)}`;
-  const essential = order.plan === "essential";
   const subject = kind === "welcome" ? "Welcome to Yotion — your order is confirmed" : "We’ve received your Yotion website details";
   const summary = `Order reference: ${order.order_reference}\nPlan: ${orderPlan(order.plan)}\nPaid today: ${money(order.amount_paid)}`;
-  const renewal = essential ? "Renews automatically at £69 a year." : "Renews automatically at £39.99 a month.";
+  const renewal = `Renews automatically at ${orderRenewal(order.plan, order.amount_paid)}.`;
   const text = kind === "welcome"
     ? `Thank you for choosing Yotion. Your order is confirmed.\n\n${summary}\n${renewal}\n\nStart or resume your website setup:\n${link}\n\nKeep this link private. You can save your progress and come back when you’re ready.`
     : `Thank you for sending your school details. We’ll review them and prepare your website. You’ll be able to review it before it goes live.\n\nOrder reference: ${order.order_reference}\n\nView your website progress:\n${link}\n\nKeep this link private.`;

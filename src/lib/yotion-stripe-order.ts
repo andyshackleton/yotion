@@ -10,7 +10,7 @@ export function stripeOrderConfiguration() {
     signingSecret,
     liveMode: mode === "live",
     plans: new Map([
-      [essential, { name: "essential", total: 9900 }],
+      [essential, { name: "essential", total: mode === "live" ? 9999 : 9900 }],
       [managed, { name: "managed", total: 3999 }],
     ]),
   };

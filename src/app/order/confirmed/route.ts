@@ -3,7 +3,7 @@ import { NextRequest } from "next/server";
 import { isSameOriginPost } from "../../../lib/yotion-admin-csrf";
 import { db } from "../../../lib/yotion-db";
 import { sendOrderEmail } from "../../../lib/yotion-order-email";
-import { escapeOrderHtml, money, orderPlan } from "../../../lib/yotion-order-progress";
+import { escapeOrderHtml, money, orderPlan, orderRenewal } from "../../../lib/yotion-order-progress";
 
 export const dynamic = "force-dynamic";
 
@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
     const { data: emailRows, error: emailError } = await client.rpc("yotion_order_email", { p_session: id, p_token: null });
     const emailSent = !emailError && Boolean(emailRows?.[0]?.welcome_sent_at);
     const result = request.nextUrl.searchParams.get("email");
-    const renewal = order.plan === "essential" ? "£69 a year" : "£39.99 a month";
+    const renewal = orderRenewal(order.plan, Number(order.amount_paid));
     return confirmation(`<p class="confirmed">✓ Payment confirmed</p>
       <h1>Thank you for choosing Yotion.</h1>
       <p class="intro">Your order is confirmed. Let’s get your driving school ready to go online.</p>
