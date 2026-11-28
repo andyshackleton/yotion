@@ -1,25 +1,20 @@
-import Stripe from "stripe";
+import type Stripe from "stripe";
 import { sendOrderEmail } from "../../../../lib/yotion-order-email";
 import { db } from "../../../../lib/yotion-db";
-import { stripeOrderConfiguration } from "../../../../lib/yotion-stripe-order";
+import { stripeOrderConfigurations, verifyOrderEvent } from "../../../../lib/yotion-stripe-order";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
-  const config = stripeOrderConfiguration();
-  if (!config) return new Response("Ordering is not configured", { status: 503 });
+  const configurations = stripeOrderConfigurations();
+  if (!configurations.length) return new Response("Ordering is not configured", { status: 503 });
 
   const signature = request.headers.get("stripe-signature");
   if (!signature) return new Response("Missing Stripe signature", { status: 400 });
 
-  let event: Stripe.Event;
-  try {
-    event = Stripe.webhooks.constructEvent(await request.text(), signature, config.signingSecret);
-  } catch {
-    return new Response("Invalid Stripe event", { status: 400 });
-  }
-
-  if (event.livemode !== config.liveMode) return new Response("Unexpected Stripe mode", { status: 400 });
+  const verified = verifyOrderEvent(await request.text(), signature, configurations);
+  if (!verified) return new Response("Invalid Stripe event", { status: 400 });
+  const { event, config } = verified;
   if (event.type !== "checkout.session.completed" && event.type !== "checkout.session.async_payment_succeeded") {
     return new Response(null, { status: 204 });
   }
